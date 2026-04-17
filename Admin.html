@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Quản trị viên - Chung cư Groupod</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f4f7f6; display: flex; }
+    .sidebar { width: 250px; background: #2c3e50; color: white; height: 100vh; padding: 20px; box-sizing: border-box; }
+    .content { flex: 1; padding: 30px; }
+    h2 { color: #333; border-bottom: 2px solid #5cb85c; padding-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+    th { background-color: #5cb85c; color: white; }
+    .status-paid { color: #5cb85c; font-weight: bold; }
+    .status-unpaid { color: #d9534f; font-weight: bold; }
+    .btn-logout { background: #d9534f; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 20px; }
+  </style>
+</head>
+<body>
+<div class="sidebar">
+  <h3>GROUPOD ADMIN</h3>
+  <p>Xin chào, Quản trị viên</p>
+  <button class="btn-logout" onclick="location.href='Login.html'">Đăng xuất</button>
+</div>
+<div class="content">
+  <h2>Danh sách cư dân & Phí bảo trì</h2>
+  <table>
+    <thead>
+    <tr>
+      <th>Mã Block</th>
+      <th>Số Căn hộ</th>
+      <th>Tên cư dân</th>
+      <th>Liên hệ</th>
+      <th>CCCD</th>
+      <th>Phí bảo trì</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr><td>1</td><td>101</td><td>John</td><td>9876154321</td><td>3122215002097</td><td class="status-paid">Đã đóng</td></tr>
+    <tr><td>1</td><td>102</td><td>Selcia</td><td>9876543874</td><td>3122215002098</td><td class="status-unpaid">Chưa đóng</td></tr>
+    <tr><td>2</td><td>203</td><td>Joseph</td><td>9876547257</td><td>3122215002103</td><td class="status-paid">Đã đóng</td></tr>
+    <tr><td>3</td><td>301</td><td>Antony</td><td>9876548712</td><td>3122215002105</td><td class="status-paid">Đã đóng</td></tr>
+    </tbody>
+  </table>
+</div>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{"user":"phongg","note":"phật giáo","time":"19:52:14 16/4/2026"}
+{"target":"others","name":"Sa Mi","gender":"Nữ","cccd":"0010133453","note":"","sender":"phongg"}
+{"target":"self","name":"Nguyễn Phong","gender":"Nam","cccd":"001204001234","note":"Nghề Nghiệp: Kỹ Sư","sender":"phongg"}
+{"target":"self","name":"Nguyễn Phong","gender":"Nam","cccd":"001204001235","note":"kỹ sư","sender":"phongg"}
+{"target":"others","name":"Sa Mi","gender":"Nam","cccd":"0010133453","note":"","sender":"phongg"}
+{"target":"self","name":"Nguyễn Phong","gender":"Nam","cccd":"001204001235","dob":"20/02/2004","note":"Kỹ Sư","sender":"phongg"}
+{"target":"others","name":"Sa Mi","gender":"Nam","cccd":"0010133453","dob":"20/02/2005","note":"người nhà","sender":"phongg"}

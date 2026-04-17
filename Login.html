@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Đăng nhập - Chung cư Groupod</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e9ecef;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-card {
+            background: white;
+            width: 450px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+            url('https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80');
+            background-size: cover;
+            background-position: center;
+            height: 180px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            letter-spacing: 2px;
+            font-weight: bold;
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-group label {
+            width: 120px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            flex: 1;
+            border: none;
+            border-bottom: 1px solid #ddd;
+            padding: 8px 0;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            border-bottom: 2px solid #5cb85c;
+        }
+
+        .options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .options a {
+            text-decoration: none;
+            color: #888;
+            cursor: pointer;
+        }
+
+        .options a:hover {
+            color: #5cb85c;
+        }
+
+        .login-btn {
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            width: 150px;
+            padding: 12px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            display: block;
+            margin: 0 auto;
+            transition: background 0.3s;
+        }
+
+        .login-btn:hover {
+            background-color: #4cae4c;
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .register-link a {
+            color: #5cb85c;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="header">
+        <h1>ĐĂNG NHẬP</h1>
+    </div>
+    <div class="form-container">
+        <div class="input-group">
+            <label>Tên đăng nhập</label>
+            <input type="text" placeholder="Nhập tên đăng nhập" id="username">
+        </div>
+        <div class="input-group">
+            <label>Mật khẩu</label>
+            <input type="password" placeholder="Nhập mật khẩu" id="password">
+        </div>
+
+        <div class="options">
+            <div class="remember-me">
+                <input type="checkbox" id="remember">
+                <label for="remember">Ghi nhớ tôi</label>
+            </div>
+            <a onclick="forgotPass()">Quên mật khẩu?</a>
+        </div>
+
+        <button class="login-btn" onclick="validate()">Login</button>
+
+        <div class="register-link">
+            Chưa có tài khoản? <a href="Register.html">Đăng ký ngay</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Hàm Đăng nhập
+    async function validate() {
+        const user = document.getElementById('username').value;
+        const pass = document.getElementById('password').value;
+
+        try {
+            const response = await fetch('http://localhost:8080/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: user, password: pass })
+            });
+
+            const result = await response.json();
+
+            if (result.status === "success") {
+                if (result.role === "admin") {
+                    window.location.href = "Admin.html";
+                } else {
+                    window.location.href = "Tenant.html";
+                }
+            } else {
+                alert(result.message);
+            }
+        } catch (error) {
+            console.error("Lỗi kết nối Backend:", error);
+            alert("Không thể kết nối với máy chủ Java!");
+        }
+    }
+
+    // Hàm Quên mật khẩu
+    async function forgotPass() {
+        const user = prompt("Vui lòng nhập tên đăng nhập để lấy lại mật khẩu:");
+        if (!user) return;
+
+        try {
+            const response = await fetch('http://localhost:8080/api/forgot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: user })
+            });
+            const result = await response.json();
+            alert(result.message);
+        } catch (error) {
+            alert("Lỗi kết nối server!");
+        }
+    }
+</script>
+
+</body>
+</html>
