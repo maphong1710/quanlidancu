@@ -2,35 +2,28 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Hồ Sơ Cư Dân - Groupod</title>
+  <title>Cổng Cư Dân - Groupod</title>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: #f0f2f5; color: #333; }
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: #f0f2f5; }
     .sidebar { width: 260px; background: #1a1a1a; color: white; height: 100vh; position: fixed; padding-top: 20px; }
-    .sidebar h2 { text-align: center; color: #5cb85c; margin-bottom: 30px; letter-spacing: 1px; }
+    .sidebar h2 { text-align: center; color: #5cb85c; margin-bottom: 30px; }
     .nav-item { padding: 15px 25px; cursor: pointer; transition: 0.3s; border-left: 4px solid transparent; }
-    .nav-item:hover { background: #2d2d2d; }
     .nav-item.active { background: #2d2d2d; border-left: 4px solid #5cb85c; color: #5cb85c; font-weight: bold; }
     .main-content { margin-left: 260px; flex: 1; padding: 40px; }
     .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; }
-    .profile-header { display: flex; gap: 30px; align-items: flex-start; }
-    .resident-photo { width: 130px; height: 170px; border: 3px solid #eee; border-radius: 8px; object-fit: cover; }
-    .info-grid { display: grid; grid-template-columns: 160px 1fr; gap: 12px; flex: 1; }
-    .info-label { font-weight: bold; color: #888; text-transform: uppercase; font-size: 12px; }
-    .info-value { color: #2c3e50; font-size: 15px; }
+    .resident-photo { width: 130px; height: 170px; border-radius: 8px; object-fit: cover; border: 2px solid #ddd; }
+    .info-grid { display: grid; grid-template-columns: 160px 1fr; gap: 10px; flex: 1; }
+    .info-label { font-weight: bold; color: #888; text-transform: uppercase; font-size: 11px; }
     table { width: 100%; border-collapse: collapse; margin-top: 15px; }
     th, td { border: 1px solid #edf2f7; padding: 12px; text-align: left; }
     th { background: #f8fafc; color: #64748b; font-size: 13px; }
-    .member-link { color: #5cb85c; text-decoration: none; font-weight: bold; cursor: pointer; }
-    .btn-create { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-    .form-box { border: 1px solid #eee; padding: 20px; background: #fafafa; border-radius: 8px; margin: 15px 0; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    input[type="text"], textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-size: 14px; }
-    .btn-group { text-align: right; margin-top: 20px; }
-    .btn-send { background: #5cb85c; color: white; border: none; padding: 12px 30px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-    .btn-cancel { background: #94a3b8; color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; margin-right: 10px; }
+    .filter-bar { display: flex; gap: 15px; background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+    .filter-item { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+    .filter-item input, select { padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
+    .btn-green { background: #5cb85c; color: white; border: none; padding: 10px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; }
     .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
-    .modal-content { background: white; margin: 5% auto; padding: 30px; border-radius: 12px; width: 550px; position: relative; box-shadow: 0 5px 25px rgba(0,0,0,0.2); }
-    .detail-row { margin-bottom: 15px; display: grid; grid-template-columns: 140px 1fr; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; }
+    .modal-content { background: white; margin: 5% auto; padding: 30px; border-radius: 12px; width: 550px; position: relative; }
+    .member-link { color: #5cb85c; text-decoration: none; font-weight: bold; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -39,155 +32,158 @@
   <h2>GROUPOD</h2>
   <div id="nav-profile" class="nav-item active" onclick="switchTab('profile')">Hồ sơ cá nhân</div>
   <div id="nav-update" class="nav-item" onclick="switchTab('update')">Cập nhật thông tin</div>
+  <div id="nav-activities" class="nav-item" onclick="switchTab('activities')">Lịch sinh hoạt</div>
   <div class="nav-item" onclick="location.href='Login.html'" style="margin-top: 60px; color: #e74c3c;">Đăng xuất</div>
 </div>
 
 <div class="main-content">
+
   <div id="tab-profile">
     <div class="card">
-      <h2 id="profile-title" style="margin-top: 0;">Thông tin cá nhân</h2>
-      <div class="profile-header">
+      <h2 id="profile-title" style="margin-top:0">Hồ sơ cá nhân</h2>
+      <div style="display:flex; gap:30px">
         <img id="res-photo" src="" class="resident-photo">
         <div id="personal-info" class="info-grid"></div>
       </div>
       <h3>Thành viên gia đình</h3>
-      <table><thead><tr><th>Họ và tên</th><th>Quan hệ</th><th>Nghề nghiệp</th></tr></thead><tbody id="family-body"></tbody></table>
+      <table><thead><tr><th>Tên</th><th>Quan hệ</th><th>Nghề nghiệp</th></tr></thead><tbody id="family-body"></tbody></table>
     </div>
   </div>
 
   <div id="tab-update" style="display: none;">
-    <div id="request-history-view">
+    <div id="history-view">
+      <div class="card"><button class="btn-green" onclick="showForm()">+ Tạo yêu cầu điều chỉnh</button></div>
       <div class="card">
-        <h3>Gửi Yêu Cầu Mới</h3>
-        <button class="btn-create" onclick="showRequestForm()">+ Tạo mới yêu cầu</button>
-      </div>
-      <div class="card">
-        <h3>Lịch Sử Yêu Cầu</h3>
-        <table><thead><tr><th>Mã</th><th>Đối tượng</th><th>Họ tên yêu cầu</th><th>Trạng thái</th><th>Hành động</th></tr></thead><tbody id="history-body"></tbody></table>
+        <h3>Lịch Sử Yêu Cầu (Click để xem chi tiết)</h3>
+        <table><thead><tr><th>Mã</th><th>Đối tượng</th><th>Họ tên yêu cầu</th><th>Trạng thái</th></tr></thead><tbody id="history-body"></tbody></table>
       </div>
     </div>
-
-    <div id="request-form-container" style="display: none;">
+    <div id="form-view" style="display: none;">
       <div class="card">
-        <h2>Yêu cầu điều chỉnh thông tin</h2>
+        <h2>Form điều chỉnh</h2>
         <p><strong>Đối tượng:</strong>
-          <input type="radio" name="target" value="self" checked onclick="toggleFormMode(true)"> Bản thân
-          <input type="radio" name="target" value="others" onclick="toggleFormMode(false)"> Khai hộ
+          <input type="radio" name="target" value="self" checked onclick="toggleForm(true)"> Bản thân
+          <input type="radio" name="target" value="others" onclick="toggleForm(false)"> Khai hộ
         </p>
-        <div class="form-box">
-          <div class="grid-2">
-            <div><label class="info-label">Họ tên sửa</label><input type="text" id="f-name"></div>
-            <div><label class="info-label">Giới tính</label><input type="text" id="f-gender"></div>
-          </div>
-          <div class="grid-2" style="margin-top: 15px;">
-            <div><label class="info-label">Số CCCD</label><input type="text" id="f-cccd"></div>
-            <div><label class="info-label">Ngày sinh</label><input type="text" id="f-dob" value="20/02/2004"></div>
-          </div>
+        <div style="background:#fafafa; padding:15px; border-radius:8px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div><label class="info-label">Họ tên</label><input type="text" id="f-name" style="width:90%"></div>
+          <div><label class="info-label">Giới tính</label><input type="text" id="f-gender" style="width:90%"></div>
+          <div><label class="info-label">CCCD</label><input type="text" id="f-cccd" style="width:90%"></div>
+          <div><label class="info-label">Nội dung</label><textarea id="f-note" style="width:90%"></textarea></div>
         </div>
-        <label class="info-label">Nội dung ghi chú</label>
-        <textarea id="f-note" rows="4"></textarea>
-        <div class="btn-group"><button class="btn-cancel" onclick="hideRequestForm()">Hủy</button><button class="btn-send" onclick="submitUpdate()">Gửi yêu cầu</button></div>
+        <div style="margin-top:20px;"><button onclick="hideForm()">Hủy</button><button class="btn-green" onclick="submitRequest()">Gửi</button></div>
       </div>
+    </div>
+  </div>
+
+  <div id="tab-activities" style="display: none;">
+    <div class="card">
+      <h2>Lịch Sinh Hoạt & Tìm Kiếm</h2>
+      <div class="filter-bar">
+        <div class="filter-item"><label>Tiêu đề</label><input type="text" id="s-title" onkeyup="filterActivities()"></div>
+        <div class="filter-item"><label>Loại</label><select id="s-type" onchange="filterActivities()"><option value="">Tất cả</option><option value="Hội họp">Hội họp</option><option value="Văn nghệ">Văn nghệ</option></select></div>
+        <div class="filter-item"><label>Trạng thái</label><select id="s-status" onchange="filterActivities()"><option value="">Tất cả</option><option value="Sắp tới">Sắp tới</option><option value="Đang chuẩn bị">Đang chuẩn bị</option></select></div>
+      </div>
+      <table><thead><tr><th>Thời gian</th><th>Loại</th><th>Tiêu đề</th><th>Địa điểm</th><th>Trạng thái</th><th>Hành động</th></tr></thead><tbody id="activity-body"></tbody></table>
     </div>
   </div>
 </div>
 
-<div id="detail-modal" class="modal">
-  <div class="modal-content">
-    <h3 style="margin-top:0; color:#2c3e50; border-bottom:2px solid #5cb85c; padding-bottom:10px;">Chi tiết nội dung đã gửi</h3>
-    <div id="detail-body"></div>
-    <div class="btn-group"><button class="btn-cancel" onclick="closeDetailModal()">Đóng</button></div>
-  </div>
-</div>
+<div id="modal" class="modal"><div class="modal-content"><h3 id="modal-title"></h3><div id="modal-body"></div><br><button onclick="document.getElementById('modal').style.display='none'">Đóng</button></div></div>
 
 <script>
-  let myOriginalData = null;
-  let historyList = [];
+  let myData = null, historyList = [], activityList = [];
   const myUser = new URLSearchParams(window.location.search).get('user') || 'phongg';
 
-  async function loadData(targetUser) {
-    try {
-      const resp = await fetch(`http://localhost:8080/api/tenant/info?user=${targetUser}`);
-      const data = await resp.json();
-      if(targetUser === myUser && !myOriginalData) {
-        myOriginalData = data;
-        loadHistory();
-      }
-      document.getElementById('res-photo').src = data.photo;
-      document.getElementById('personal-info').innerHTML = `
-                <div class="info-label">Họ và tên:</div><div class="info-value">${data.name}</div>
-                <div class="info-label">Quan hệ chủ hộ:</div><div class="info-value" style="color:#5cb85c; font-weight:bold">${data.relationToOwner}</div>
-                <div class="info-label">Dân tộc:</div><div class="info-value">${data.ethnicity}</div>
-                <div class="info-label">Quốc tịch:</div><div class="info-value">${data.nation}</div>
-                <div class="info-label">Số CCCD:</div><div class="info-value">${data.cccd}</div>
-                <div class="info-label">Giới tính:</div><div class="info-value">${data.gender}</div>
-                <div class="info-label">Số điện thoại:</div><div class="info-value">${data.phone}</div>
-                <div class="info-label">Số hộ khẩu:</div><div class="info-value">${data.household}</div>
-            `;
-      document.getElementById('family-body').innerHTML = data.family.map(m => `
-                <tr><td><a class="member-link" onclick="loadData('${m.username}')">${m.name}</a></td>
-                <td>${m.relation}</td><td>${m.job}</td></tr>`).join('');
-      document.getElementById('profile-title').innerText = (targetUser === myUser) ? "Hồ sơ của tôi" : "Hồ sơ: " + data.name;
-    } catch (e) { console.error(e); }
+  async function init() {
+    const resp = await fetch(`http://localhost:8080/api/tenant/info?user=${myUser}`);
+    myData = await resp.json();
+    renderProfile(myData);
+    loadHistory();
+    loadActivities();
+  }
+
+  function renderProfile(d) {
+    document.getElementById('res-photo').src = d.photo;
+    document.getElementById('personal-info').innerHTML = `
+            <div class="info-label">Họ tên:</div><div style="font-weight:bold">${d.name}</div>
+            <div class="info-label">Giới tính:</div><div>${d.gender}</div>
+            <div class="info-label">Dân tộc:</div><div>${d.ethnicity}</div>
+            <div class="info-label">Quốc tịch:</div><div>${d.nation}</div>
+            <div class="info-label">CCCD:</div><div>${d.cccd}</div>
+            <div class="info-label">Quan hệ:</div><div style="color:#5cb85c; font-weight:bold">${d.relationToOwner}</div>
+            <div class="info-label">Điện thoại:</div><div>${d.phone}</div>
+        `;
+    document.getElementById('family-body').innerHTML = d.family.map(m => `<tr><td><a class="member-link" onclick="loadMember('${m.username}')">${m.name}</a></td><td>${m.relation}</td><td>${m.job}</td></tr>`).join('');
+  }
+
+  async function loadMember(u) {
+    const r = await fetch(`http://localhost:8080/api/tenant/info?user=${u}`);
+    const d = await r.json();
+    renderProfile(d);
+    document.getElementById('profile-title').innerText = (u === myUser) ? "Hồ sơ của tôi" : "Hồ sơ thành viên";
   }
 
   async function loadHistory() {
-    const resp = await fetch(`http://localhost:8080/api/tenant/get-history?user=${myUser}`);
-    historyList = await resp.json();
-    const tbody = document.getElementById('history-body');
-    if(historyList.length === 0) { tbody.innerHTML = "<tr><td colspan='5' style='text-align:center'>Trống</td></tr>"; return; }
-    tbody.innerHTML = historyList.map((req, i) => `
-            <tr style="cursor:pointer" onclick="viewDetail(${i})">
-                <td>REQ-${100+i}</td><td>${req.target === 'self' ? 'Bản thân' : 'Khai hộ'}</td>
-                <td>${req.name}</td><td style="color:orange; font-weight:bold">Đang chờ</td>
-                <td><button class="member-link" style="background:none; border:none;">Chi tiết</button></td>
-            </tr>`).join('');
+    const r = await fetch(`http://localhost:8080/api/tenant/get-history?user=${myUser}`);
+    historyList = await r.json();
+    document.getElementById('history-body').innerHTML = historyList.map((req, i) => `<tr onclick="viewHistory(${i})" style="cursor:pointer"><td>REQ-${100+i}</td><td>${req.target}</td><td>${req.name}</td><td style="color:orange">Đang chờ</td></tr>`).join('');
   }
 
-  function viewDetail(i) {
-    const req = historyList[i];
-    document.getElementById('detail-body').innerHTML = `
-            <div class="detail-row"><span class="info-label">Loại:</span><span>${req.target === 'self' ? 'Bản thân' : 'Khai hộ'}</span></div>
-            <div class="detail-row"><span class="info-label">Họ tên:</span><span style="font-weight:bold">${req.name}</span></div>
-            <div class="detail-row"><span class="info-label">CCCD:</span><span>${req.cccd}</span></div>
-            <div class="detail-row"><span class="info-label">Ghi chú:</span><div style="background:#f9f9f9; padding:10px; border-radius:5px;">${req.note || 'Trống'}</div></div>
-        `;
-    document.getElementById('detail-modal').style.display = "block";
+  async function loadActivities() {
+    const r = await fetch('http://localhost:8080/api/tenant/activities');
+    activityList = await r.json();
+    renderActivities(activityList);
   }
 
-  function closeDetailModal() { document.getElementById('detail-modal').style.display = "none"; }
-  function toggleFormMode(isSelf) {
-    document.getElementById('f-name').value = isSelf ? myOriginalData.name : "";
-    document.getElementById('f-gender').value = isSelf ? myOriginalData.gender : "";
-    document.getElementById('f-cccd').value = isSelf ? myOriginalData.cccd : "";
+  function renderActivities(list) {
+    document.getElementById('activity-body').innerHTML = list.map((a, i) => `<tr><td>${a.time}</td><td>${a.type}</td><td>${a.title}</td><td>${a.location}</td><td><b>${a.status}</b></td><td><button onclick="viewActivity(${i})">Xem</button></td></tr>`).join('');
   }
+
+  function filterActivities() {
+    const t = document.getElementById('s-title').value.toLowerCase();
+    const y = document.getElementById('s-type').value.toLowerCase();
+    const s = document.getElementById('s-status').value.toLowerCase();
+    renderActivities(activityList.filter(a => a.title.toLowerCase().includes(t) && a.type.toLowerCase().includes(y) && a.status.toLowerCase().includes(s)));
+  }
+
+  function viewHistory(i) {
+    const r = historyList[i];
+    document.getElementById('modal-title').innerText = "Chi tiết yêu cầu";
+    document.getElementById('modal-body').innerHTML = `<p><b>Đối tượng:</b> ${r.target}</p><p><b>Họ tên:</b> ${r.name}</p><p><b>CCCD:</b> ${r.cccd}</p><p><b>Nội dung:</b> ${r.note}</p>`;
+    document.getElementById('modal').style.display = 'block';
+  }
+
+  function viewActivity(i) {
+    const a = activityList[i];
+    document.getElementById('modal-title').innerText = a.title;
+    document.getElementById('modal-body').innerHTML = `<p><b>Thời gian:</b> ${a.time}</p><p><b>Địa điểm:</b> ${a.location}</p><p><b>Phụ trách:</b> ${a.manager}</p><p><b>Chi tiết:</b> ${a.details}</p>`;
+    document.getElementById('modal').style.display = 'block';
+  }
+
   function switchTab(t) {
-    document.getElementById('tab-profile').style.display = (t==='profile'?'block':'none');
-    document.getElementById('tab-update').style.display = (t==='update'?'block':'none');
-    document.getElementById('nav-profile').classList.toggle('active', t==='profile');
-    document.getElementById('nav-update').classList.toggle('active', t==='update');
-  }
-  function showRequestForm() { document.getElementById('request-history-view').style.display = 'none'; document.getElementById('request-form-container').style.display = 'block'; toggleFormMode(true); }
-  function hideRequestForm() { document.getElementById('request-history-view').style.display = 'block'; document.getElementById('request-form-container').style.display = 'none'; }
-
-  async function submitUpdate() {
-    const payload = {
-      target: document.querySelector('input[name="target"]:checked').value,
-      name: document.getElementById('f-name').value,
-      gender: document.getElementById('f-gender').value,
-      cccd: document.getElementById('f-cccd').value,
-      dob: document.getElementById('f-dob').value,
-      note: document.getElementById('f-note').value,
-      sender: myUser
-    };
-    await fetch('http://localhost:8080/api/tenant/update-request', { method: 'POST', body: JSON.stringify(payload) });
-    alert("Đã gửi và lưu vĩnh viễn!");
-    hideRequestForm();
-    loadHistory();
+    ['profile', 'update', 'activities'].forEach(id => {
+      document.getElementById('tab-'+id).style.display = (t===id?'block':'none');
+      document.getElementById('nav-'+id).classList.toggle('active', t===id);
+    });
   }
 
-  window.onload = () => loadData(myUser);
-  window.onclick = (e) => { if(e.target == document.getElementById('detail-modal')) closeDetailModal(); }
+  function toggleForm(isSelf) {
+    document.getElementById('f-name').value = isSelf ? myData.name : "";
+    document.getElementById('f-gender').value = isSelf ? myData.gender : "";
+    document.getElementById('f-cccd').value = isSelf ? myData.cccd : "";
+  }
+
+  function showForm() { document.getElementById('history-view').style.display='none'; document.getElementById('form-view').style.display='block'; toggleForm(true); }
+  function hideForm() { document.getElementById('history-view').style.display='block'; document.getElementById('form-view').style.display='none'; }
+
+  async function submitRequest() {
+    const p = { target: document.querySelector('input[name="target"]:checked').value, name: document.getElementById('f-name').value, gender: document.getElementById('f-gender').value, cccd: document.getElementById('f-cccd').value, note: document.getElementById('f-note').value, sender: myUser };
+    await fetch('http://localhost:8080/api/tenant/update-request', { method: 'POST', body: JSON.stringify(p) });
+    alert("Gửi thành công!"); hideForm(); loadHistory();
+  }
+
+  window.onload = init;
 </script>
 </body>
 </html>
