@@ -1,0 +1,282 @@
+<style>
+    .btn-icon {
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: 0.2s;
+    }
+
+    .btn-icon:hover {
+    background: #f1f5f9;
+}
+</style>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div>
+        <h1 style="margin: 0; font-size: 24px; color: var(--text-main);">Quản lý Hộ khẩu</h1>
+        <p id="household-count" style="color: var(--text-muted); font-size: 14px; margin-top: 5px;">Đang tải dữ liệu...
+        </p>
+    </div>
+    <button class="btn-action" style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 18px;">+</span> Thêm hộ khẩu
+    </button>
+</div>
+
+<!-- Thống kê nhanh -->
+<div class="stats-grid">
+    <div class="stat-card" style="display: flex; align-items: center; gap: 15px;">
+        <div style="background: rgba(90, 115, 243, 0.1); padding: 10px; border-radius: 8px; color: var(--primary);">🏠
+        </div>
+        <div><span>Tổng hộ khẩu</span>
+            <h3 id="stat-total-h">0</h3>
+        </div>
+    </div>
+    <div class="stat-card" style="display: flex; align-items: center; gap: 15px;">
+        <div style="background: rgba(16, 185, 129, 0.1); padding: 10px; border-radius: 8px; color: #10b981;">👥</div>
+        <div><span>Tổng nhân khẩu</span>
+            <h3 id="stat-total-r">0</h3>
+        </div>
+    </div>
+    <div class="stat-card" style="display: flex; align-items: center; gap: 15px;">
+        <div style="background: rgba(245, 158, 11, 0.1); padding: 10px; border-radius: 8px; color: #f59e0b;">📊</div>
+        <div><span>TB thành viên/hộ</span>
+            <h3 id="stat-avg">0</h3>
+        </div>
+    </div>
+</div>
+
+<div style="position: relative; margin-bottom: 20px;">
+    <input type="text" id="household-search" class="search-bar" placeholder="Tìm theo mã hộ, chủ hộ, địa chỉ..."
+        style="padding-left: 40px; width: 100%; max-width: 500px;">
+    <span style="position: absolute; left: 15px; top: 10px; color: var(--text-muted);">🔍</span>
+</div>
+
+<div class="card" style="padding: 0; overflow: hidden;">
+    <table>
+        <thead>
+            <tr style="background: #f8fafc;">
+                <th>Mã hộ</th>
+                <th>Chủ hộ</th>
+                <th>Địa chỉ</th>
+                <th>Thành viên</th>
+                <th style="text-align: right;">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody id="household-list"></tbody>
+    </table>
+</div>
+
+<!-- Modal Chi tiết hộ khẩu -->
+<div id="household-detail-modal"
+    style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
+    <div
+        style="background:white; width:90%; max-width:500px; border-radius:12px; overflow:hidden; box-shadow:0 10px 25px rgba(0,0,0,0.1);">
+        <div
+            style="padding:16px 20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0; font-size:18px; display:flex; align-items:center; gap:8px;">🏠 Chi tiết hộ khẩu</h3>
+            <button onclick="closeHouseholdDetail()"
+                style="border:none; background:none; font-size:20px; cursor:pointer; color:#999;">&times;</button>
+        </div>
+        <div id="modal-content" style="padding:20px; max-height:70vh; overflow-y:auto;"></div>
+    </div>
+</div>
+
+<!-- Modal Form Thêm/Sửa Hộ Khẩu -->
+<div id="household-form-modal"
+    style="display:none; position:fixed; z-index:1001; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
+    <div
+        style="background:white; width:90%; max-width:500px; border-radius:12px; overflow:hidden; box-shadow:0 10px 25px rgba(0,0,0,0.1);">
+        <div
+            style="padding:16px 20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+            <h3 id="form-title" style="margin:0; font-size:18px;">🏠 Thêm hộ gia đình mới</h3>
+            <button onclick="closeHouseholdForm()"
+                style="border:none; background:none; font-size:20px; cursor:pointer; color:#999;">&times;</button>
+        </div>
+        <form id="household-form" style="padding:20px; display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+            <input type="hidden" id="old-code"> <!-- Lưu mã cũ khi sửa -->
+
+            <div style="grid-column: span 1;">
+                <label style="font-size:13px; font-weight:600;">Mã hộ khẩu *</label>
+                <input type="text" id="f-code" required placeholder="VD: HK001"
+                    style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; margin-top:5px;">
+            </div>
+            <div style="grid-column: span 1;">
+                <label style="font-size:13px; font-weight:600;">Tên chủ hộ *</label>
+                <input type="text" id="f-head" required
+                    style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; margin-top:5px;">
+            </div>
+            <div style="grid-column: span 2;">
+                <label style="font-size:13px; font-weight:600;">Địa chỉ *</label>
+                <input type="text" id="f-address" required
+                    style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; margin-top:5px;">
+            </div>
+            <div style="grid-column: span 2; display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
+                <button type="button" onclick="closeHouseholdForm()"
+                    style="padding:8px 16px; border:1px solid #ddd; background:#fff; border-radius:6px; cursor:pointer;">Hủy</button>
+                <button type="submit"
+                    style="padding:8px 16px; border:none; background:#5a73f3; color:white; border-radius:6px; cursor:pointer;">Lưu
+                    thay đổi</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Biến lưu trữ dữ liệu nạp từ API[cite: 17]
+    let currentResidents = [];
+    let currentHouseholds = [];
+
+    // Hàm đóng/mở form
+    window.closeHouseholdDetail = () => document.getElementById('household-detail-modal').style.display = 'none';
+    window.closeHouseholdForm = () => document.getElementById('household-form-modal').style.display = 'none';
+
+    window.openAddHousehold = function () {
+        document.getElementById('form-title').innerText = "🏠 Thêm hộ gia đình mới";
+        document.getElementById('household-form').reset();
+        document.getElementById('old-code').value = ""; // Để trống nghĩa là thêm mới
+        document.getElementById('household-form-modal').style.display = 'flex';
+    };
+
+    window.openEditHousehold = function (code) {
+        const h = currentHouseholds.find(item => item.code === code);
+        if (!h) return;
+
+        document.getElementById('form-title').innerText = "✏️ Chỉnh sửa hộ gia đình";
+        document.getElementById('f-code').value = h.code;
+        document.getElementById('f-head').value = h.headName;
+        document.getElementById('f-address').value = h.address;
+        document.getElementById('old-code').value = h.code; // Lưu lại để Backend biết là sửa hộ nào
+        document.getElementById('household-form-modal').style.display = 'flex';
+    };
+
+    // Xử lý gửi form
+    document.getElementById('household-form').onsubmit = async function (e) {
+        e.preventDefault();
+        const data = {
+            old_code: document.getElementById('old-code').value,
+            new_code: document.getElementById('f-code').value,
+            head_name: document.getElementById('f-head').value,
+            address: document.getElementById('f-address').value
+        };
+
+        try {
+            const res = await fetch('http://localhost:8080/api/admin/save-household', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if (result.status === 'success') {
+                alert("Đã lưu thông tin hộ khẩu!");
+                closeHouseholdForm();
+                initHouseholdPage(); // Load lại danh sách
+            }
+        } catch (err) { alert("Lỗi khi lưu dữ liệu!"); }
+    };
+
+    // Gán sự kiện cho nút "Thêm hộ khẩu" có sẵn trong HTML của bạn
+    document.querySelector('.btn-action').onclick = openAddHousehold;
+    window.deleteHousehold = async function (code) {
+        if (confirm(`Bạn có chắc chắn muốn xóa toàn bộ hộ khẩu ${code}? \nLưu ý: Tất cả nhân khẩu thuộc hộ này cũng sẽ bị xóa.`)) {
+            try {
+                const res = await fetch('http://localhost:8080/api/admin/delete-household', {
+                    method: 'POST',
+                    body: JSON.stringify({ code: code })
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    alert("Xóa thành công!");
+                    initHouseholdPage(); // Load lại danh sách sau khi xóa
+                } else {
+                    alert("Lỗi: " + result.message);
+                }
+            } catch (error) {
+                console.error("Lỗi xóa:", error);
+                alert("Không thể kết nối đến server");
+            }
+        }
+    };
+
+    window.showHouseholdDetail = function (householdCode) {
+        const modal = document.getElementById('household-detail-modal');
+        const content = document.getElementById('modal-content');
+        modal.style.display = 'flex';
+        content.innerHTML = "<p style='text-align:center;'>Đang tải thành viên...</p>";
+
+        const h = currentHouseholds.find(item => String(item.code) === String(householdCode));
+        if (!h) return;
+
+        // 1. Lọc cư dân thuộc hộ này
+        let filteredMembers = currentResidents.filter(r => String(r.household_id) === String(householdCode));
+
+        // 2. LOGIC SẮP XẾP: Đưa "Chủ hộ" lên đầu tiên
+        filteredMembers.sort((a, b) => {
+            if (a.relationship === 'Chủ hộ') return -1; // a là chủ hộ, cho lên trên
+            if (b.relationship === 'Chủ hộ') return 1;  // b là chủ hộ, cho b lên trên (đẩy a xuống)
+            return 0; // Giữ nguyên thứ tự các thành viên khác
+        });
+
+        content.innerHTML = `
+            <div style="background:#f8fafc; border-radius:8px; padding:15px; margin-bottom:20px; font-size:14px; border:1px solid #e2e8f0;">
+                <div style="margin-bottom:8px;"><b># Mã hộ:</b> <span style="font-family:monospace; color:#5a73f3; font-weight:bold;">${h.code}</span></div>
+                <div style="margin-bottom:8px;"><b>👤 Chủ hộ:</b> ${h.headName}</div>
+                <div><b>📍 Địa chỉ:</b> ${h.address}</div>
+            </div>
+            <h4 style="margin-bottom:12px; font-size:15px;">👥 Thành viên (${filteredMembers.length} người)</h4>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                ${filteredMembers.map(m => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border:1px solid #edf2f7; border-radius:10px; background:${m.relationship === 'Chủ hộ' ? '#f0f4ff' : '#fff'}; border-left: 4px solid ${m.relationship === 'Chủ hộ' ? '#5a73f3' : '#edf2f7'};">
+                        <div>
+                            <div style="font-weight:600; font-size:14px;">${m.full_name} ${m.relationship === 'Chủ hộ' ? '' : ''}</div>
+                            <div style="font-size:12px; color:#718096;">${m.relationship} · CCCD: ${m.id_number}</div>
+                        </div>
+                        <span class="badge ${m.status === 'Thường trú' ? 'bg-success' : 'bg-warning'}" 
+                            style="font-size:10px; padding:4px 8px; border-radius:4px; color:white; background:${m.status === 'Thường trú' ? '#10b981' : '#f59e0b'};">
+                            ${m.status}
+                        </span>
+                    </div>
+                `).join('')}
+                ${filteredMembers.length === 0 ? '<p style="text-align:center; color:#999; font-size:13px; padding:20px;">Chưa có thành viên nào được ghi nhận</p>' : ''}
+            </div>
+        `;
+        };
+
+    window.initHouseholdPage = async function () {
+        try {
+            const [resH, resR] = await Promise.all([
+                fetch('http://localhost:8080/api/admin/households'),
+                fetch('http://localhost:8080/api/admin/residents')
+            ]);
+
+            currentHouseholds = await resH.json();
+            currentResidents = await resR.json();
+
+            const listBody = document.getElementById('household-list');
+            listBody.innerHTML = "";
+
+            document.getElementById('household-count').innerText = `${currentHouseholds.length} hộ khẩu trong hệ thống`;
+            document.getElementById('stat-total-h').innerText = currentHouseholds.length;
+            document.getElementById('stat-total-r').innerText = currentResidents.length;
+            document.getElementById('stat-avg').innerText = (currentResidents.length / currentHouseholds.length).toFixed(1);
+
+            currentHouseholds.forEach(h => {
+                const row = `
+                <tr>
+                    <td><span class="code-badge">${h.code}</span></td>
+                    <td style="font-weight: 600;">${h.headName}</td>
+                    <td>${h.address}</td>
+                    <td><span class="badge" style="background:#f1f5f9; color:#475569;">👥 ${h.memberCount} người</span></td>
+                    <td style="text-align: right;">
+                        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                            <button class="btn-icon" onclick="showHouseholdDetail('${h.code}')" title="Xem"><img src="https://img.icons8.com/material-outlined/24/64748b/visible.png" width="16"></button>
+                            <button class="btn-icon" onclick="openEditHousehold('${h.code}')" title="Sửa"><img src="https://img.icons8.com/material-outlined/24/64748b/edit--v1.png" width="16"></button>
+                            <button class="btn-icon" onclick="deleteHousehold('${h.code}')" title="Xóa"><img src="https://img.icons8.com/material-outlined/24/ef4444/trash.png" width="16"></button>
+                        </div>
+                    </td>
+                </tr>`;
+                listBody.innerHTML += row;
+            });
+        } catch (error) { console.error("Lỗi:", error); }
+    };
+</script>

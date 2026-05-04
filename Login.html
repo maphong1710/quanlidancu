@@ -173,15 +173,16 @@
             });
 
             const result = await response.json();
-
             if (result.status === "success") {
+                // Nếu role là admin, chuyển sang Admin.html
                 if (result.role === "admin") {
                     window.location.href = "Admin.html";
                 } else {
-                    window.location.href = "Tenant.html";
+                    // Nếu là cư dân, chuyển sang Tenant.html kèm theo username
+                    window.location.href = `Tenant.html?user=${result.username}`;
                 }
             } else {
-                alert(result.message);
+                alert(result.message || "Đăng nhập thất bại!");
             }
         } catch (error) {
             console.error("Lỗi kết nối Backend:", error);

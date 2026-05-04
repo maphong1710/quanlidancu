@@ -1,0 +1,323 @@
+<!-- START OF FILE request.html -->
+<style>
+    /* Style cho các ô thống kê giống React */
+    .stat-card-mini {
+        cursor: pointer;
+        border: 1px solid #e2e8f0;
+        padding: 15px;
+        border-radius: 12px;
+        background: white;
+        transition: all 0.2s;
+    }
+
+    .stat-card-mini:hover {
+        border-color: #5a73f3;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .badge-status {
+        padding: 4px 12px;
+        border-radius: 99px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .code-badge {
+        font-family: monospace;
+        background: #f1f5f9;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 12px;
+        color: #475569;
+    }
+
+    .filter-input {
+        padding: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        outline: none;
+        font-size: 14px;
+    }
+
+    .filter-input:focus {
+        border-color: #5a73f3;
+    }
+</style>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div>
+        <h1 style="margin: 0; font-size: 24px; color: var(--text-main);">Xử lý yêu cầu dân cư</h1>
+        <p id="request-total-header" style="color: var(--text-muted); font-size: 14px; margin-top: 5px;">Đang tải dữ
+            liệu...</p>
+    </div>
+</div>
+
+<!-- Ô thống kê trạng thái -->
+<div id="status-summary" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px;">
+    <div class="stat-card-mini" onclick="filterByStatus('Chờ xử lý')">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px; color: #64748b; font-size: 12px;">
+            <span style="color: #f59e0b;">🕒</span> Chờ xử lý
+        </div>
+        <p id="count-pending" style="margin: 0; font-size: 24px; font-weight: 700;">0</p>
+    </div>
+    <div class="stat-card-mini" onclick="filterByStatus('Đã duyệt')">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px; color: #64748b; font-size: 12px;">
+            <span style="color: #10b981;">✅</span> Đã duyệt
+        </div>
+        <p id="count-approved" style="margin: 0; font-size: 24px; font-weight: 700;">0</p>
+    </div>
+    <div class="stat-card-mini" onclick="filterByStatus('Từ chối')">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px; color: #64748b; font-size: 12px;">
+            <span style="color: #ef4444;">❌</span> Từ chối
+        </div>
+        <p id="count-rejected" style="margin: 0; font-size: 24px; font-weight: 700;">0</p>
+    </div>
+</div>
+
+<!-- Bộ lọc (Filters) -->
+<div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+    <div style="position: relative; flex: 1; min-width: 300px;">
+        <input type="text" id="search-request" class="filter-input" placeholder="Tìm theo tên, mã YC,..."
+            style="width: 100%; padding-left: 40px;">
+        <span style="position: absolute; left: 15px; top: 12px; color: #94a3b8;">🔍</span>
+    </div>
+    <select id="filter-status-select" class="filter-input" style="min-width: 150px;">
+        <option value="all">Tất cả trạng thái</option>
+        <option value="Chờ xử lý">Chờ xử lý</option>
+        <option value="Đã duyệt">Đã duyệt</option>
+        <option value="Từ chối">Từ chối</option>
+    </select>
+    <select id="filter-type-select" class="filter-input" style="min-width: 180px;">
+        <option value="all">Tất cả loại yêu cầu</option>
+        <optgroup label="Nhân khẩu">
+            <option value="Khai sinh">Khai sinh</option>
+            <option value="Thay đổi thông tin cá nhân">Thay đổi thông tin cá nhân</option>
+        </optgroup>
+        <optgroup label="Hộ khẩu">
+            <option value="Đăng ký thường trú">Đăng ký thường trú</option>
+            <option value="Đăng ký tạm trú">Đăng ký tạm trú</option>
+            <option value="Thay đổi thông tin hộ khẩu">Thay đổi thông tin hộ khẩu</option>
+        </optgroup>
+    </select>
+</div>
+
+<!-- Bảng danh sách -->
+<div class="card" style="padding: 0; overflow: hidden; border: 1px solid #e2e8f0; border-radius: 12px;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+            <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                <th style="text-align: left; padding: 15px;">Mã YC</th>
+                <th style="text-align: left; padding: 15px;">Người yêu cầu</th>
+                <th style="text-align: left; padding: 15px;">Loại yêu cầu</th>
+                <th style="text-align: left; padding: 15px;">Ngày tiếp nhận</th>
+                <th style="text-align: left; padding: 15px;">Trạng thái</th>
+                <th style="text-align: right; padding: 15px;">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody id="request-list-body"></tbody>
+    </table>
+</div>
+
+<!-- Modal Chi tiết và Xử lý -->
+<div id="modal-request-detail"
+    style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; backdrop-filter: blur(4px);">
+    <div
+        style="background:white; width:95%; max-width:500px; border-radius:16px; overflow:hidden; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+        <div
+            style="padding:16px 24px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0; font-size:18px;">Chi tiết yêu cầu</h3>
+            <button onclick="closeModal('modal-request-detail')"
+                style="border:none; background:none; font-size:24px; cursor:pointer; color:#94a3b8;">&times;</button>
+        </div>
+        <div style="padding:24px; max-height:80vh; overflow-y:auto;">
+            <div id="det-badges" style="margin-bottom:16px; display:flex; gap:8px;"></div>
+            <div
+                style="background:#f8fafc; border-radius:12px; padding:16px; margin-bottom:20px; font-size:14px; color:#475569; display:flex; flex-direction:column; gap:10px;">
+                <div><span style="color:#94a3b8;">Mã YC:</span> <b id="det-code"
+                        style="font-family:monospace; margin-left:5px;"></b></div>
+                <div><span style="color:#94a3b8;">Người gửi:</span> <b id="det-name" style="margin-left:5px;"></b></div>
+                <div><span style="color:#94a3b8;">Số điện thoại:</span> <span id="det-phone"
+                        style="margin-left:5px;"></span></div>
+                <div><span style="color:#94a3b8;">Ngày gửi:</span> <span id="det-date" style="margin-left:5px;"></span>
+                </div>
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="font-size:13px; font-weight:600; color:#1e293b; display:block; margin-bottom:8px;">Nội
+                    dung yêu cầu</label>
+                <div id="det-note"
+                    style="background:#f1f5f9; padding:12px; border-radius:8px; font-size:14px; color:#334155; line-height:1.5;">
+                </div>
+            </div>
+            <div id="admin-action-area" style="border-top:1px solid #f1f5f9; padding-top:16px; display:none;">
+                <label style="font-size:13px; font-weight:600; color:#1e293b; display:block; margin-bottom:8px;">Ghi chú
+                    xử lý (Admin)</label>
+                <textarea id="admin-notes" rows="3" placeholder="Nhập lý do duyệt hoặc từ chối..."
+                    style="width:100%; border:1px solid #e2e8f0; border-radius:8px; padding:10px; font-size:14px; outline:none;"></textarea>
+                <div style="display:flex; gap:10px; margin-top:16px;">
+                    <button onclick="processRequest('Từ chối')"
+                        style="flex:1; padding:10px; border:1px solid #ef4444; color:#ef4444; background:none; border-radius:8px; cursor:pointer; font-weight:600;">Từ
+                        chối</button>
+                    <button onclick="processRequest('Đã duyệt')"
+                        style="flex:1; padding:10px; border:none; background:#10b981; color:white; border-radius:8px; cursor:pointer; font-weight:600;">Duyệt
+                        yêu cầu</button>
+                </div>
+            </div>
+            <div id="processed-info"
+                style="display:none; margin-top:10px; font-size:12px; color:#94a3b8; font-style:italic; border-top:1px solid #f1f5f9; padding-top:10px;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const statusConfig = {
+        "Chờ xử lý": { color: "rgba(245, 158, 11, 0.1)", textColor: "#f59e0b" },
+        "Đã duyệt": { color: "rgba(16, 185, 129, 0.1)", textColor: "#10b981" },
+        "Từ chối": { color: "rgba(239, 68, 68, 0.1)", textColor: "#ef4444" }
+    };
+
+    let allRequests = [];
+    let selectedRequestId = null;
+
+    // Đóng modal
+    window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+
+    // 1. Tải dữ liệu
+    window.fetchRequests = async function () {
+        try {
+            const response = await fetch('http://localhost:8080/api/admin/requests');
+            allRequests = await response.json();
+            updateSummaryCards();
+            renderRequestTable(allRequests);
+        } catch (error) {
+            console.error("Lỗi:", error);
+            document.getElementById('request-total-header').innerText = "Lỗi kết nối Server";
+        }
+    }
+
+    // 2. Thống kê
+    function updateSummaryCards() {
+        document.getElementById('request-total-header').innerText = `${allRequests.length} yêu cầu trong hệ thống`;
+        document.getElementById('count-pending').innerText = allRequests.filter(r => r.status === "Chờ xử lý").length;
+        document.getElementById('count-approved').innerText = allRequests.filter(r => r.status === "Đã duyệt").length;
+        document.getElementById('count-rejected').innerText = allRequests.filter(r => r.status === "Từ chối").length;
+    }
+
+    // 3. Hiển thị bảng
+    function renderRequestTable(data) {
+        const listBody = document.getElementById('request-list-body');
+        listBody.innerHTML = "";
+        if (data.length === 0) {
+            listBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:40px; color:#94a3b8;">Không có yêu cầu phù hợp</td></tr>`;
+            return;
+        }
+        data.forEach(r => {
+            const cfg = statusConfig[r.status] || statusConfig["Chờ xử lý"];
+            listBody.innerHTML += `
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 15px;"><span class="code-badge">${r.request_code || 'YC' + r.id}</span></td>
+                    <td style="padding: 15px;">
+                        <div style="font-weight: 600; color:#1e293b;">${r.requester_name || 'Cư dân'}</div>
+                        <div style="font-size: 12px; color: #64748b;">${r.requester_phone || ''}</div>
+                    </td>
+                    <td style="padding: 15px;"><span style="background:#f1f5f9; color:#475569; padding:4px 10px; border-radius:6px; font-size:12px;">${r.request_type}</span></td>
+                    <td style="padding: 15px; color:#64748b;">${r.created_date ? r.created_date.split(' ')[0] : '—'}</td>
+                    <td style="padding: 15px;"><span class="badge-status" style="background:${cfg.color}; color:${cfg.textColor};">${r.status}</span></td>
+                    <td style="padding: 15px; text-align: right;">
+                        <button onclick="showRequestDetail('${r.id}')" style="border:none; background:#5a73f3; color:white; padding:6px 14px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600;">Xem & Xử lý</button>
+                    </td>
+                </tr>`;
+        });
+    }
+
+    // 4. Mở chi tiết
+        window.showRequestDetail = function (id) {
+            const r = allRequests.find(item => item.id == id);
+            if (!r) return;
+            selectedRequestId = id;
+
+            document.getElementById('det-code').innerText = r.request_code;
+            document.getElementById('det-name').innerText = r.requester_name;
+
+            // SỬA TẠI ĐÂY: Hiển thị r.phone thay vì r.requester_phone
+            document.getElementById('det-phone').innerText = (r.phone && r.phone !== "null") ? r.phone : "—";
+
+            document.getElementById('det-date').innerText = r.created_date ? r.created_date.split(' ')[0] : "—";
+            document.getElementById('det-note').innerText = r.note || "Không có nội dung mô tả.";
+
+            const cfg = statusConfig[r.status] || statusConfig["Chờ xử lý"];
+            document.getElementById('det-badges').innerHTML = `
+            <span class="badge-status" style="background:${cfg.color}; color:${cfg.textColor};">${r.status}</span>
+            <span class="badge-status" style="background:#f1f5f9; color:#475569;">${r.request_type}</span>`;
+
+            const actionArea = document.getElementById('admin-action-area');
+            const processedInfo = document.getElementById('processed-info');
+
+            if (r.status === 'Chờ xử lý') {
+                actionArea.style.display = 'block';
+                processedInfo.style.display = 'none';
+                document.getElementById('admin-notes').value = "";
+            } else {
+                actionArea.style.display = 'none';
+                processedInfo.style.display = 'block';
+                processedInfo.innerText = `Đã xử lý. Ghi chú Admin: ${r.admin_notes || 'Không có'}`;
+            }
+
+            document.getElementById('modal-request-detail').style.display = 'flex';
+        };
+
+    // 5. Gửi yêu cầu xử lý
+    window.processRequest = async function (newStatus) {
+        const notes = document.getElementById('admin-notes').value;
+        const data = { id: selectedRequestId, status: newStatus, admin_notes: notes };
+        try {
+            const res = await fetch('http://localhost:8080/api/admin/process-request', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if (result.status === 'success') {
+                closeModal('modal-request-detail');
+                fetchRequests();
+            }
+        } catch (err) { alert("Lỗi khi gửi yêu cầu!"); }
+    };
+
+    // 6. Logic Tìm kiếm & Lọc
+    function applyFilters() {
+        const searchTerm = document.getElementById('search-request').value.toLowerCase();
+        const statusFilter = document.getElementById('filter-status-select').value;
+        const typeFilter = document.getElementById('filter-type-select').value;
+
+        const filteredData = allRequests.filter(r => {
+            // Chuyển ngày về định dạng chuỗi để tìm kiếm (VD: "2026-05-01")
+            const dateStr = r.created_date ? r.created_date.toLowerCase() : "";
+
+            const matchesSearch = !searchTerm ||
+                r.requester_name.toLowerCase().includes(searchTerm) ||
+                (r.request_code && r.request_code.toLowerCase().includes(searchTerm)) ||
+                (r.target_cccd && r.target_cccd.includes(searchTerm)) ||
+                dateStr.includes(searchTerm); // THÊM DÒNG NÀY: Tìm kiếm theo ngày
+
+            const matchesStatus = statusFilter === 'all' || r.status === statusFilter;
+            const matchesType = typeFilter === 'all' || r.request_type === typeFilter;
+
+            return matchesSearch && matchesStatus && matchesType;
+        });
+
+        renderRequestTable(filteredData);
+    }
+
+    // Sự kiện lọc
+    document.getElementById('search-request').addEventListener('input', applyFilters);
+    document.getElementById('filter-status-select').addEventListener('change', applyFilters);
+    document.getElementById('filter-type-select').addEventListener('change', applyFilters);
+    window.filterByStatus = (status) => {
+        document.getElementById('filter-status-select').value = status;
+        applyFilters();
+    };
+
+    // Chạy ngay
+    fetchRequests();
+</script>

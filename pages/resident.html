@@ -1,0 +1,397 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div>
+        <h1 style="margin: 0; font-size: 24px; color: var(--text-main);">Quản lý Nhân khẩu</h1>
+        <p id="resident-count" style="color: var(--text-muted); font-size: 14px; margin-top: 5px;">Đang tải dữ liệu...
+        </p>
+    </div>
+    <button class="btn-action" style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 18px;">+</span> Thêm nhân khẩu
+    </button>
+</div>
+
+<div style="display: flex; gap: 15px; margin-bottom: 20px;">
+    <div style="position: relative; flex: 1;">
+        <input type="text" id="resident-search" class="search-bar" placeholder="Tìm kiếm tên, CCCD,..."
+            style="padding-left: 40px; width: 100%; max-width: 500px; margin-bottom: 0;">
+        <span style="position: absolute; left: 15px; top: 10px; color: var(--text-muted);">🔍</span>
+    </div>
+    <!-- Các bộ lọc Select giống như trong code React bạn gửi -->
+    <select id="filter-status" class="search-bar" style="max-width: 150px; margin-bottom: 0;">
+        <option value="all">Tình trạng</option>
+        <option value="Thường trú">Thường trú</option>
+        <option value="Tạm trú">Tạm trú</option>
+        <option value="Tạm vắng">Tạm vắng</option>
+    </select>
+</div>
+
+<div class="card" style="padding: 0; overflow: hidden;">
+    <table id="resident-table">
+        <thead>
+            <tr style="background: #f8fafc;">
+                <th>Họ tên</th>
+                <th>CCCD/CMND</th>
+                <th>Ngày sinh</th>
+                <th>Giới tính</th>
+                <th>Quan hệ</th>
+                <th>Nhân thân</th>
+                <th style="text-align: right;">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody id="resident-list">
+            <!-- Dữ liệu từ Java Backend sẽ đổ vào đây -->
+        </tbody>
+    </table>
+</div>
+<!-- Modal Chi tiết nhân khẩu -->
+<div id="resident-detail-modal"
+    style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; backdrop-filter: blur(4px);">
+    <div
+        style="background:white; width:95%; max-width:500px; border-radius:16px; overflow:hidden; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);">
+        <!-- Header -->
+        <div
+            style="padding:20px 24px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <h3 id="det-full-name" style="margin:0; font-size:18px; font-weight:700; color:#1e293b;">Tên nhân khẩu
+                </h3>
+                <span id="det-status-badge"
+                    style="margin-top:4px; display:inline-block; padding:2px 10px; border-radius:99px; font-size:11px; font-weight:600;">Thường
+                    trú</span>
+            </div>
+            <button onclick="closeResidentDetail()"
+                style="border:none; background:#f1f5f9; width:32px; height:32px; border-radius:50%; cursor:pointer; color:#64748b; font-size:20px; line-height:1;">&times;</button>
+        </div>
+
+        <!-- Body (Danh sách thông tin) -->
+        <div id="det-content" style="padding:8px 24px 24px 24px; max-height:70vh; overflow-y:auto;">
+            <!-- Các hàng thông tin sẽ được render ở đây -->
+        </div>
+    </div>
+</div>
+
+<style>
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-icon {
+        width: 32px;
+        height: 32px;
+        background: #f8fafc;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+    }
+
+    .info-label {
+        font-size: 11px;
+        color: #64748b;
+        margin: 0;
+    }
+
+    .info-value {
+        font-size: 14px;
+        font-weight: 500;
+        color: #1e293b;
+        margin: 2px 0 0 0;
+    }
+</style>
+<!-- Modal Form Thêm/Sửa Nhân Khẩu -->
+<div id="resident-form-modal"
+    style="display:none; position:fixed; z-index:1001; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; backdrop-filter: blur(4px);">
+    <div
+        style="background:white; width:95%; max-width:650px; border-radius:16px; overflow:hidden; box-shadow:0 20px 25px rgba(0,0,0,0.1);">
+        <div
+            style="padding:16px 24px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+            <h3 id="res-form-title" style="margin:0; font-size:18px;">Thêm nhân khẩu mới</h3>
+            <button onclick="closeResidentForm()"
+                style="border:none; background:none; font-size:24px; cursor:pointer; color:#999;">&times;</button>
+        </div>
+        <form id="resident-form"
+            style="padding:24px; display:grid; grid-template-columns: 1fr 1fr; gap:15px; max-height:80vh; overflow-y:auto;">
+            <input type="hidden" id="res-old-id">
+
+            <div style="grid-column: span 1;">
+                <label class="form-label">Họ và tên *</label>
+                <input type="text" id="res-name" required class="form-input">
+            </div>
+            <div style="grid-column: span 1;">
+                <label class="form-label">Số CCCD/CMND *</label>
+                <input type="text" id="res-cccd" required class="form-input">
+            </div>
+            <div style="grid-column: span 1;">
+                <label class="form-label">Giới tính</label>
+                <select id="res-gender" class="form-input">
+                    <option value="Nam">Nam</option>
+                    <option value="Nữ">Nữ</option>
+                </select>
+            </div>
+            <div style="grid-column: span 1;">
+                <label class="form-label">Số điện thoại</label>
+                <input type="text" id="res-phone" class="form-input">
+            </div>
+            <div style="grid-column: span 1;">
+                <label class="form-label">Hộ gia đình</label>
+                <select id="res-household" class="form-input">
+                    <!-- Sẽ nạp từ API -->
+                </select>
+            </div>
+            <div style="grid-column: span 1;">
+                <label class="form-label">Quan hệ với chủ hộ</label>
+                <select id="res-relation" class="form-input">
+                    <option value="Chủ hộ">Chủ hộ</option>
+                    <option value="Vợ/Chồng">Vợ/Chồng</option>
+                    <option value="Con">Con</option>
+                    <option value="Bố/Mẹ">Bố/Mẹ</option>
+                    <option value="Anh/Chị/Em">Anh/Chị/Em</option>
+                    <option value="Khác">Khác</option>
+                </select>
+            </div>
+            <div style="grid-column: span 1;">
+                <label class="form-label">Nghề nghiệp</label>
+                <input type="text" id="res-job" class="form-input">
+            </div>
+            <div style="grid-column: span 1;">
+                <label class="form-label">Tình trạng cư trú *</label>
+                <select id="res-status" class="form-input">
+                    <option value="Thường trú">Thường trú</option>
+                    <option value="Tạm trú">Tạm trú</option>
+                    <option value="Tạm vắng">Tạm vắng</option>
+                </select>
+            </div>
+            <div style="grid-column: span 2;">
+                <label class="form-label">Địa chỉ thường trú *</label>
+                <input type="text" id="res-address" required class="form-input">
+            </div>
+
+            <div style="grid-column: span 2; display:flex; justify-content:flex-end; gap:12px; margin-top:10px;">
+                <button type="button" onclick="closeResidentForm()"
+                    style="padding:10px 20px; border:1px solid #ddd; background:#fff; border-radius:8px; cursor:pointer;">Hủy</button>
+                <button type="submit"
+                    style="padding:10px 20px; border:none; background:#5a73f3; color:white; border-radius:8px; cursor:pointer;">Lưu
+                    thông tin</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .form-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #475569;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        margin-top: 5px;
+        outline: none;
+    }
+
+    .form-input:focus {
+        border-color: #5a73f3;
+        box-shadow: 0 0 0 2px rgba(90, 115, 243, 0.1);
+    }
+        .btn-icon {
+        border: none;
+        background: none;
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 4px;
+        transition: 0.2s;
+    }
+
+    .btn-icon:hover {
+        background: #f1f5f9;
+    }
+</style>
+<script>
+    let currentResidents = []; // Biến toàn cục để lưu dữ liệu nạp từ API
+    window.closeResidentForm = () => document.getElementById('resident-form-modal').style.display = 'none';
+
+    // Hàm nạp danh sách hộ khẩu vào dropdown
+    async function loadHouseholdsToSelect() {
+        const res = await fetch('http://localhost:8080/api/admin/households');
+        const households = await res.json();
+        const select = document.getElementById('res-household');
+        select.innerHTML = households.map(h => `<option value="${h.code}">${h.code} - ${h.headName}</option>`).join('');
+    }
+
+    window.openAddResident = function () {
+        document.getElementById('res-form-title').innerText = "Thêm nhân khẩu mới";
+        document.getElementById('resident-form').reset();
+        document.getElementById('res-old-id').value = "";
+        loadHouseholdsToSelect();
+        document.getElementById('resident-form-modal').style.display = 'flex';
+    };
+
+    window.openEditResident = function (id) {
+        const r = currentResidents.find(item => item.id === id);
+        if (!r) return;
+
+        document.getElementById('res-form-title').innerText = "Chỉnh sửa cư dân";
+        document.getElementById('res-old-id').value = r.id;
+        document.getElementById('res-name').value = r.full_name;
+        document.getElementById('res-cccd').value = r.id_number;
+        document.getElementById('res-gender').value = r.gender;
+        document.getElementById('res-phone').value = r.phone;
+        document.getElementById('res-job').value = r.occupation || "";
+        document.getElementById('res-relation').value = r.relationship;
+        document.getElementById('res-status').value = r.status;
+        document.getElementById('res-address').value = r.address;
+
+        loadHouseholdsToSelect().then(() => {
+            document.getElementById('res-household').value = r.household_id;
+        });
+
+        document.getElementById('resident-form-modal').style.display = 'flex';
+    };
+
+    // Gửi form
+    document.getElementById('resident-form').onsubmit = async function (e) {
+        e.preventDefault();
+        const data = {
+            old_id: document.getElementById('res-old-id').value,
+            full_name: document.getElementById('res-name').value,
+            id_number: document.getElementById('res-cccd').value,
+            gender: document.getElementById('res-gender').value,
+            phone: document.getElementById('res-phone').value,
+            household_id: document.getElementById('res-household').value,
+            relationship: document.getElementById('res-relation').value,
+            occupation: document.getElementById('res-job').value,
+            status: document.getElementById('res-status').value,
+            address: document.getElementById('res-address').value
+        };
+
+        const res = await fetch('http://localhost:8080/api/admin/save-resident', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (result.status === 'success') {
+            alert("Thành công!");
+            closeResidentForm();
+            fetchData(); // Reload bảng
+        }
+    };
+
+    // Gán sự kiện cho nút "Thêm nhân khẩu" và nút "Sửa"
+    document.querySelector('.btn-action').onclick = openAddResident;
+    // (Trong fetchData, nút sửa hãy đổi thành: onclick="openEditResident('${r.id}')")
+    window.closeResidentDetail = () => document.getElementById('resident-detail-modal').style.display = 'none';
+
+    window.showResidentDetail = function (username) {
+        const resident = currentResidents.find(r => r.id === username);
+        if (!resident) return;
+
+        // Cập nhật Header
+        document.getElementById('det-full-name').innerText = resident.full_name;
+        const badge = document.getElementById('det-status-badge');
+        badge.innerText = resident.status;
+
+        // Màu sắc badge dựa trên status
+        const statusColors = {
+            "Thường trú": { bg: "#dcfce7", text: "#166534" },
+            "Tạm trú": { bg: "#fef9c3", text: "#854d0e" },
+            "Tạm vắng": { bg: "#fee2e2", text: "#991b1b" }
+        };
+        const colors = statusColors[resident.status] || { bg: "#f1f5f9", text: "#475569" };
+        badge.style.backgroundColor = colors.bg;
+        badge.style.color = colors.text;
+
+        // Render danh sách chi tiết (Icons dùng emoji hoặc text để đơn giản)
+        const items = [
+            { label: "Số CCCD/CMND", value: resident.id_number, icon: "🆔" },
+            { label: "Tuổi", value: resident.date_of_birth, icon: "📅" },
+            { label: "Giới tính", value: resident.gender, icon: "👤" },
+            { label: "Số điện thoại", value: resident.phone, icon: "📞" },
+            { label: "Quan hệ chủ hộ", value: resident.relationship, icon: "🏠" },
+            { label: "Mã hộ khẩu", value: resident.household_id, icon: "🔢" },
+            { label: "Quê quán / Địa chỉ", value: resident.address, icon: "📍" }
+        ];
+
+        const content = document.getElementById('det-content');
+        content.innerHTML = items.map(item => `
+        <div class="info-item">
+            <div class="info-icon">${item.icon}</div>
+            <div>
+                <p class="info-label">${item.label}</p>
+                <p class="info-value">${item.value || "—"}</p>
+            </div>
+        </div>
+    `).join('');
+
+        document.getElementById('resident-detail-modal').style.display = 'flex';
+    };
+    window.deleteResident = async function (id) {
+            // Hiện thông báo xác nhận trước khi xóa
+            const confirmDelete = confirm("Bạn có chắc chắn muốn xóa nhân khẩu này? \nHành động này không thể hoàn tác.");
+
+            if (confirmDelete) {
+                try {
+                    const response = await fetch('http://localhost:8080/api/admin/delete-resident', {
+                        method: 'POST',
+                        body: JSON.stringify({ id: id })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.status === 'success') {
+                        alert("Đã xóa nhân khẩu thành công!");
+                        fetchData(); // Gọi lại hàm nạp dữ liệu để cập nhật bảng
+                    } else {
+                        alert("Lỗi: " + (result.message || "Không thể xóa"));
+                    }
+                } catch (error) {
+                    console.error("Lỗi khi xóa:", error);
+                    alert("Đã xảy ra lỗi khi kết nối đến máy chủ.");
+                }
+            }
+        };
+    // Cập nhật hàm fetchData để lưu vào biến currentResidents và gán sự kiện click
+    window.fetchData = async function () {
+        try {
+            const response = await fetch('http://localhost:8080/api/admin/residents');
+            currentResidents = await response.json();
+
+            const listBody = document.getElementById('resident-list');
+            listBody.innerHTML = "";
+
+            document.getElementById('resident-count').innerText = `${currentResidents.length} nhân khẩu trong hệ thống`;
+
+            currentResidents.forEach(r => {
+                const row = `
+                <tr class="hover-row">
+                    <td style="font-weight: 600;">${r.full_name}</td>
+                    <td style="font-family: monospace; font-size: 12px;">${r.cccd}</td> <!-- Sửa thành cccd -->
+                    <td>${r.age} tuổi</td> <!-- SQL không có ngày sinh, dùng tạm age -->
+                    <td>${r.gender}</td>
+                    <td style="font-size: 12px;">${r.relationship || '—'}</td>
+                    <td>
+                        <span class="badge ${r.status === 'Thường trú' ? 'bg-success' : 'bg-warning'}">${r.status}</span>
+                    </td>
+                    <td style="text-align: right;">
+                        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                            <button class="btn-icon" onclick="showResidentDetail('${r.id}')" title="Xem"><img src="https://img.icons8.com/material-outlined/24/64748b/visible.png" width="16"></button>
+                            <button class="btn-icon" onclick="openEditResident('${r.id}')" title="Sửa"><img src="https://img.icons8.com/material-outlined/24/64748b/edit--v1.png" width="16"></button>
+                            <button class="btn-icon" onclick="deleteResident('${r.id}')" title="Xóa"><img src="https://img.icons8.com/material-outlined/24/ef4444/trash.png" width="16"></button>
+                        </div>
+                    </td>
+                </tr>`;
+                listBody.innerHTML += row;
+            });
+        } catch (error) { console.error("Lỗi:", error); }
+    };
+</script>

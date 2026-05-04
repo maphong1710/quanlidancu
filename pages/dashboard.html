@@ -1,0 +1,156 @@
+<!-- START OF FILE dashboard.html -->
+<div style="margin-bottom: 30px;">
+    <h1 style="margin: 0; font-size: 24px; color: var(--text-main);">Tổng quan</h1>
+    <p style="margin: 5px 0 0 0; color: var(--text-muted); font-size: 14px;">Dữ liệu thống kê thời gian thực từ hệ thống</p>
+</div>
+
+<!-- Các ô thống kê con số -->
+<div class="stats-grid" id="stat-cards">
+    <div class="stat-card">
+        <span>Tổng cư dân</span>
+        <h3 id="dash-total-res">0</h3>
+    </div>
+    <div class="stat-card">
+        <span>Hộ gia đình</span>
+        <h3 id="dash-total-house">0</h3>
+    </div>
+    <div class="stat-card">
+        <span>Thường trú</span>
+        <h3 id="dash-status-tt">0</h3>
+    </div>
+    <div class="stat-card">
+        <span>Tạm trú/Vắng</span>
+        <h3 id="dash-status-other">0</h3>
+    </div>
+</div>
+
+<!-- Khu vực Biểu đồ -->
+<div class="charts-grid">
+    <div class="card">
+        <h4 style="margin-bottom: 20px;">Phân bổ giới tính</h4>
+        <div style="height: 250px; position: relative;">
+            <canvas id="genderChart"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <h4 style="margin-bottom: 20px;">Tình trạng cư trú</h4>
+        <div style="height: 250px; position: relative;">
+            <canvas id="statusChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Bảng cư dân mới nhất -->
+<div class="card" style="margin-top: 24px;">
+    <h4 style="margin-bottom: 15px;">Cư dân mới thêm gần đây</h4>
+    <table>
+        <thead>
+            <tr>
+                <th>Họ tên</th>
+                <th>Số CCCD</th>
+                <th>Giới tính</th>
+                <th>Trạng thái</th>
+            </tr>
+        </thead>
+        <tbody id="recent-residents-list">
+            <!-- Dữ liệu nạp động -->
+        </tbody>
+    </table>
+</div>
+
+<!-- Nhúng thư viện biểu đồ Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Khai báo biến biểu đồ toàn cục để tránh vẽ đè
+    let gChart, sChart;
+
+    window.initDashboard = async function() {
+        try {
+            // 1. Gọi API lấy dữ liệu
+            const [resResidents, resHouseholds] = await Promise.all([
+                fetch('http://localhost:8080/api/admin/residents'),
+                fetch('http://localhost:8080/api/admin/households')
+            ]);
+
+            const residents = await resResidents.json();
+            const households = await resHouseholds.json();
+
+            // 2. Tính toán con số thống kê
+            const totalRes = residents.length;
+            const totalHouse = households.length;
+            const thuongTru = residents.filter(r => r.status === 'Thường trú').length;
+            const tamTruVang = totalRes - thuongTru;
+
+            // 3. Cập nhật con số lên giao diện
+            document.getElementById('dash-total-res').innerText = totalRes;
+            document.getElementById('dash-total-house').innerText = totalHouse;
+            document.getElementById('dash-status-tt').innerText = thuongTru;
+            document.getElementById('dash-status-other').innerText = tamTruVang;
+
+            // 4. Cập nhật bảng "Cư dân mới nhất" (lấy 5 người cuối cùng)
+            const recent = [...residents].reverse().slice(0, 5);
+            const listBody = document.getElementById('recent-residents-list');
+            // Tìm hàm initDashboard và sửa phần render bảng:
+            listBody.innerHTML = recent.map(r => `
+                <tr>
+                    <td style="font-weight:600;">${r.full_name}</td>
+                    <td style="font-family:monospace;">${r.cccd}</td> <!-- Sửa thành cccd -->
+                    <td>${r.gender}</td>
+                    <td><span class="badge ${r.status === 'Thường trú' ? 'bg-success' : 'bg-warning'}">${r.status}</span></td>
+                </tr>
+            `).join('');
+
+            // 5. Vẽ biểu đồ
+            renderGenderChart(residents);
+            renderStatusChart(residents);
+
+        } catch (error) {
+            console.error("Lỗi nạp Dashboard:", error);
+        }
+    };
+
+    function renderGenderChart(data) {
+        const male = data.filter(r => r.gender === 'Nam').length;
+        const female = data.filter(r => r.gender === 'Nữ').length;
+
+        const ctx = document.getElementById('genderChart').getContext('2d');
+        if (gChart) gChart.destroy();
+        gChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Nam', 'Nữ'],
+                datasets: [{
+                    data: [male, female],
+                    backgroundColor: ['#5a73f3', '#ff6384'],
+                    borderWidth: 0
+                }]
+            },
+            options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+
+    function renderStatusChart(data) {
+        const tt = data.filter(r => r.status === 'Thường trú').length;
+        const tTru = data.filter(r => r.status === 'Tạm trú').length;
+        const tVang = data.filter(r => r.status === 'Tạm vắng').length;
+
+        const ctx = document.getElementById('statusChart').getContext('2d');
+        if (sChart) sChart.destroy();
+        sChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Thường trú', 'Tạm trú', 'Tạm vắng'],
+                datasets: [{
+                    data: [tt, tTru, tVang],
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                    borderWidth: 0
+                }]
+            },
+            options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+
+    // Tự động chạy khi nạp trang
+    initDashboard();
+</script>
