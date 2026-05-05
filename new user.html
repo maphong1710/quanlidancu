@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Cổng Khách Hàng - Groupod</title>
+  <style>
+    /* BÊ NGUYÊN CSS CỦA CỔNG CƯ DÂN SANG ĐỂ ĐỒNG BỘ */
+    :root {
+      --bg-body: #f8f9fa;
+      --bg-card: #ffffff;
+      --bg-sidebar: #1e1e2d;
+      --primary-blue: #2479e8;
+      --text-dark: #2d3748;
+      --text-muted: #718096;
+      --border-light: #edf2f7;
+      --accent-green: #48bb78;
+      --warning-orange: #f59e0b;
+      --danger-red: #ff5f57;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      display: flex;
+      background: var(--bg-body);
+      color: var(--text-dark);
+    }
+
+    .sidebar {
+      width: 260px;
+      background: var(--bg-sidebar);
+      color: #a2a3b7;
+      height: 100vh;
+      position: fixed;
+      padding-top: 20px;
+    }
+
+    .sidebar h2 {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+      font-size: 18px;
+      letter-spacing: 1px;
+    }
+
+    .nav-item {
+      padding: 12px 25px;
+      cursor: pointer;
+      transition: 0.3s;
+      margin: 4px 15px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: white;
+    }
+
+    .nav-item.active {
+      background: var(--primary-blue);
+      color: white;
+      font-weight: 500;
+      box-shadow: 0 4px 15px rgba(90, 115, 243, 0.3);
+    }
+
+    .main-content {
+      margin-left: 260px;
+      flex: 1;
+      padding: 30px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+      margin-bottom: 25px;
+      border: 1px solid var(--border-light);
+    }
+
+    h2, h3 {
+      color: var(--text-dark);
+      font-weight: 600;
+      margin-top: 0;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 12px;
+      flex: 1;
+      padding: 15px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border: 1px solid var(--border-light);
+    }
+
+    .info-label {
+      font-weight: 500;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .info-value {
+      font-weight: 500;
+      color: var(--text-dark);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th, td {
+      padding: 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    th {
+      background: #fcfcfd;
+      color: var(--text-muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td { font-size: 14px; }
+    tr:hover { background: #fafbfc; }
+
+    .filter-bar {
+      display: flex;
+      gap: 15px;
+      background: #f8fafc;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border-light);
+    }
+
+    .filter-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .filter-item label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .filter-item input, .filter-item select {
+      padding: 9px;
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .btn-green {
+      background: var(--primary-blue);
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: 0.2s;
+      font-size: 13px;
+    }
+
+    .btn-green:hover { background: #4860e0; transform: translateY(-1px); }
+    .btn-outline {
+      background: white;
+      color: var(--text-dark);
+      border: 1px solid var(--border-light);
+      padding: 8px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(2px);
+    }
+
+    .modal-content {
+      background: white;
+      margin: 8% auto;
+      padding: 30px;
+      border-radius: 15px;
+      width: 500px;
+      border: 1px solid var(--border-light);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="sidebar">
+    <h2>GROUPOD</h2>
+    <div id="nav-flats" class="nav-item active" onclick="switchTab('flats')">Danh sách căn hộ</div>
+    <div id="nav-bookings" class="nav-item" onclick="switchTab('bookings')">Lịch sử đặt chỗ</div>
+    <div id="nav-profile" class="nav-item" onclick="switchTab('profile')">Hồ sơ tài khoản</div>
+    <div class="nav-item" onclick="location.href='Login.html'" style="margin-top: 60px; color: #ff5f57;">Đăng xuất</div>
+  </div>
+
+  <div class="main-content">
+    
+    <!-- TAB 1: DANH SÁCH CĂN HỘ -->
+    <div id="tab-flats">
+      <div class="card">
+        <h2>Khám phá & Đặt chỗ Căn hộ</h2>
+        
+        <!-- UC-NU-02: Bộ lọc BHK và Ngân sách tối đa -->
+        <div class="filter-bar">
+          <div class="filter-item">
+            <label>Loại căn hộ (BHK)</label>
+            <select id="s-bhk" onchange="filterFlats()">
+              <option value="">Tất cả</option>
+              <option value="1 BHK">1 BHK</option>
+              <option value="2 BHK">2 BHK</option>
+              <option value="3 BHK">3 BHK</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label>Ngân sách tối đa (VNĐ)</label>
+            <input type="number" id="s-price" placeholder="Nhập giá tối đa..." oninput="filterFlats()">
+          </div>
+        </div>
+
+        <table id="flats-table">
+          <thead>
+            <tr>
+              <th>Mã Căn Hộ</th>
+              <th>Block</th>
+              <th>Loại (BHK)</th>
+              <th>Giá (VNĐ)</th>
+              <th style="text-align: right;">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="flat-body"></tbody>
+        </table>
+        
+        <!-- UC-NU-02: Luồng ngoại lệ -->
+        <div id="no-result" style="display: none; color: #ff5f57; text-align: center; margin-top: 20px; font-weight: bold;">
+            Không tìm thấy nhà phù hợp
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: LỊCH SỬ ĐẶT CHỖ -->
+    <div id="tab-bookings" style="display: none;">
+      <div class="card">
+        <h2>Lịch sử đặt chỗ của bạn</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Mã Đơn</th>
+              <th>Căn Hộ</th>
+              <th>Khách hàng</th>
+              <th>SĐT Liên hệ</th>
+              <th>Ngày Đặt</th>
+              <th>Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody id="booking-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 3: HỒ SƠ TÀI KHOẢN -->
+    <div id="tab-profile" style="display: none;">
+      <div class="card">
+        <h2>Thông tin khách hàng</h2>
+        <div id="personal-info" class="info-grid">
+          <!-- Load via JS -->
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODAL ĐẶT CHỖ CĂN HỘ -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <h3 id="modal-title">Xác nhận Đặt chỗ</h3>
+      <div id="modal-body" style="margin-top: 20px;">
+        <!-- Nội dung Form sinh động -->
+      </div>
+    </div>
+  </div>
+
+<script>
+let flatsData = []; // Toàn bộ dữ liệu căn hộ trống
+let bookingsData = [];
+
+window.onload = function() {
+    renderProfile();
+    fetchFlatsFromDB(); 
+    // fetchBookingsFromDB(); 
+};
+
+// --- Gọi API Lấy Danh Sách Căn Hộ (UC-NU-02) ---
+function fetchFlatsFromDB() {
+    fetch('http://localhost:8080/api/flats')
+        .then(response => response.json())
+        .then(data => {
+            // Bước 2: Hệ thống mặc định load toàn bộ danh sách căn hộ có status == "Empty"
+            flatsData = data.filter(f => f.status === "Empty");
+            renderFlats(flatsData);
+        })
+        .catch(error => console.error('Lỗi khi lấy dữ liệu căn hộ:', error));
+}
+
+// --- Hiển thị Danh sách Căn hộ (UC-NU-02) ---
+function renderFlats(data) {
+    const tbody = document.getElementById("flat-body");
+    const noResult = document.getElementById("no-result");
+    const table = document.getElementById("flats-table");
+    
+    tbody.innerHTML = "";
+
+    // Luồng ngoại lệ: Không tìm thấy căn hộ nào
+    if (data.length === 0) {
+        table.style.display = "none";
+        noResult.style.display = "block";
+        return;
+    }
+
+    // Nếu có dữ liệu
+    table.style.display = "table";
+    noResult.style.display = "none";
+
+    data.forEach(flat => {
+        const row = `
+            <tr>
+                <td>${flat.flatID}</td>
+                <td>${flat.block}</td>
+                <td>${flat.bhkType}</td>
+                <td>${flat.price.toLocaleString()}</td>
+                <td style="text-align:right;">
+                    <!-- UC-NU-03 Bước 1: Nút Book Now -->
+                    <button class="btn-green" onclick="openBookingForm('${flat.flatID}')">Book Now</button>
+                </td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+}
+
+// --- Lọc Căn hộ (UC-NU-02 Bước 3, 4) ---
+function filterFlats() {
+    const bhk = document.getElementById("s-bhk").value;
+    const maxPrice = parseFloat(document.getElementById("s-price").value);
+
+    let filtered = flatsData.filter(f => {
+        let matchBHK = !bhk || f.bhkType === bhk;
+        let matchPrice = isNaN(maxPrice) || f.price <= maxPrice;
+        return matchBHK && matchPrice;
+    });
+
+    renderFlats(filtered);
+}
+
+let selectedFlatForBooking = null;
+
+// --- Mở Form Đặt Chỗ (UC-NU-03 Bước 2) ---
+function openBookingForm(flatID) {
+    selectedFlatForBooking = flatsData.find(f => f.flatID === flatID);
+
+    document.getElementById("modal").style.display = "block";
+    document.getElementById("modal-body").innerHTML = `
+        <p><b>Căn hộ:</b> ${flatID}</p>
+        <input id="b-name" placeholder="Họ tên" style="width:100%;margin:5px 0;padding:8px;">
+        <input id="b-phone" placeholder="Số điện thoại" style="width:100%;margin:5px 0;padding:8px;">
+        <!-- UC-NU-03 Bước 3: Nút Confirm -->
+        <button class="btn-green" onclick="submitBooking()">Confirm</button>
+        <button class="btn-outline" onclick="closeModal()">Hủy</button>
+    `;
+}
+
+function closeModal() {
+    document.getElementById("modal").style.display = "none";
+}
+
+// --- Xử lý Gửi Đặt Chỗ (UC-NU-03 Bước 4, 5) ---
+function submitBooking() {
+    const name = document.getElementById('b-name').value;
+    const phone = document.getElementById('b-phone').value;
+
+    if (!name || !phone) {
+        alert("Vui lòng điền đầy đủ họ tên và số điện thoại!");
+        return;
+    }
+
+    if (!selectedFlatForBooking || !selectedFlatForBooking.flatID) {
+        alert("Không chọn được căn hộ");
+        return;
+    }
+
+    const username = sessionStorage.getItem("username"); // 👈 LẤY USER ĐÃ LOGIN
+
+    if (!username) {
+        alert("Không tìm thấy user đăng nhập!");
+        return;
+    }
+
+    const bookingPayload = {
+        customerName: name,
+        phone: phone,
+        flatID: selectedFlatForBooking.flatID,
+        username: username   // 👈 THÊM Ở ĐÂY
+    };
+
+    fetch('http://localhost:8080/api/book-flat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bookingPayload)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.status === "success") {
+            // Bước 5: Hệ thống hiển thị thông báo chính xác
+            alert("Yêu cầu đã được gửi, Ban quản lý sẽ liên hệ bạn sớm nhất");
+            closeModal();
+            fetchFlatsFromDB(); // Cập nhật lại danh sách nhà trống
+            switchTab('bookings'); 
+        } else {
+            alert("Có lỗi xảy ra từ máy chủ: " + (result.message || ""));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert("Không thể kết nối đến máy chủ.");
+    });
+}
+
+function switchTab(tab) {
+    document.getElementById("tab-flats").style.display = "none";
+    document.getElementById("tab-bookings").style.display = "none";
+    document.getElementById("tab-profile").style.display = "none";
+
+    document.getElementById("tab-" + tab).style.display = "block";
+     if (tab === "bookings") {
+        fetchBookingsFromDB(); // 👈 thêm dòng này
+    }
+}
+
+function renderProfile() {
+    document.getElementById("personal-info").innerHTML = `
+        <div class="info-label">Tên</div><div class="info-value">Người dùng mới</div>
+        <div class="info-label">SĐT</div><div class="info-value">---</div>
+    `;
+}
+function renderBookings(data) {
+    const tbody = document.getElementById("booking-body");
+    tbody.innerHTML = "";
+
+    if (!data || data.length === 0) {
+        tbody.innerHTML = `
+            <tr><td colspan="6" style="text-align:center;color:red;">
+                Chưa có lịch sử đặt chỗ
+            </td></tr>
+        `;
+        return;
+    }
+
+    data.forEach(b => {
+        tbody.innerHTML += `
+            <tr>
+                <td>${b.order_id}</td>
+                <td>${b.flatID}</td>
+                <td>${b.customerName}</td>
+                <td>${b.phone}</td>
+                <td>${b.bookingDate || ""}</td>
+                <td>${b.status || "Pending"}</td>
+            </tr>
+        `;
+    });
+}
+function fetchBookingsFromDB() {
+    fetch('http://localhost:8080/api/bookings')
+        .then(res => res.json())
+        .then(data => {
+            bookingsData = data;
+            renderBookings(data);
+        })
+        .catch(err => console.error("Lỗi load bookings:", err));
+}
+
+</script>
+
+</body>
+</html>

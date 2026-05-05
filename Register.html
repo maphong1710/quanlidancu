@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Đăng ký thành viên - Groupod</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background-color: #e9ecef; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    .card { background: white; width: 400px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 40px; }
+    h2 { text-align: center; color: #333; margin-bottom: 30px; letter-spacing: 1px; }
+    .input-group { margin-bottom: 25px; }
+    .input-group label { display: block; font-size: 14px; color: #666; margin-bottom: 8px; }
+    .input-group input { width: 100%; border: none; border-bottom: 1px solid #ddd; padding: 10px 0; outline: none; font-size: 16px; transition: 0.3s; }
+    .input-group input:focus { border-bottom: 2px solid #5cb85c; }
+    .btn { background-color: #5cb85c; color: white; border: none; width: 100%; padding: 12px; border-radius: 25px; font-size: 16px; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+    .btn:hover { background-color: #4cae4c; }
+    .back { text-align: center; margin-top: 20px; font-size: 14px; }
+    .back a { color: #888; text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h2>TẠO TÀI KHOẢN</h2>
+  <div class="input-group">
+    <label>Tên đăng nhập mới</label>
+    <input type="text" id="reg_user" placeholder="Nhập tên đăng nhập ít nhất 5 ký tự">
+  </div>
+  <div class="input-group">
+    <label>Mật khẩu</label>
+    <input type="password" id="reg_pass" placeholder="Nhập mật khẩu của bạn">
+  </div>
+  <div class="input-group">
+    <label>Xác nhận mật khẩu</label>
+    <input type="password" id="reg_repass" placeholder="Nhập lại mật khẩu">
+  </div>
+
+  <button class="btn" onclick="handleRegister()">Đăng ký tài khoản</button>
+  <div class="back"><a href="Login.html">Quay lại đăng nhập</a></div>
+</div>
+
+<script>
+  async function handleRegister() {
+    const user = document.getElementById('reg_user').value;
+    const pass = document.getElementById('reg_pass').value;
+    const repass = document.getElementById('reg_repass').value;
+
+    if (user.length < 5) {
+      alert("Tên đăng nhập quá ngắn!");
+      return;
+    }
+    if (pass !== repass) {
+      alert("Mật khẩu xác nhận không khớp!");
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:8080/api/register', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ username: user, password: pass })
+      });
+      const result = await response.json();
+      alert(result.message);
+      if(result.status === "success") window.location.href = "Login.html";
+    } catch (error) {
+      alert("Lỗi kết nối Backend. Hãy chắc chắn file SimpleBackend.java đang chạy!");
+    }
+  }
+</script>
+
+</body>
+</html>

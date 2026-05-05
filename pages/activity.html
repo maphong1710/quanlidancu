@@ -1,0 +1,232 @@
+<style>
+    .activity-card {
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+        transition: 0.3s;
+        border: 1px solid #eef2f6;
+    }
+
+    .activity-card:hover {
+        shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        border-color: #5a73f3;
+    }
+
+    .card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: auto;
+        pt: 15px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .btn-icon {
+        border: none;
+        background: none;
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 4px;
+        transition: 0.2s;
+    }
+
+    .btn-icon:hover {
+        background: #f1f5f9;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+    }
+</style>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div>
+        <h1 style="margin: 0; font-size: 24px; color: var(--text-main);">Lịch sinh hoạt</h1>
+        <p id="activity-count" style="color: var(--text-muted); font-size: 14px; margin-top: 5px;">Đang tải...</p>
+    </div>
+    <button class="btn-action">+ Thêm sự kiện</button>
+</div>
+
+<!-- Layout Card giống như code React mày gửi[cite: 17] -->
+<div id="activity-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+    <!-- Dữ liệu đổ vào đây -->
+</div>
+
+<!-- Modal Chi tiết -->
+<div id="modal-detail"
+    style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
+    <div style="background:white; width:90%; max-width:450px; border-radius:12px; padding:24px;">
+        <h2 id="det-title" style="margin-top:0;"></h2>
+        <div id="det-info" style="font-size:14px; line-height:2;"></div>
+        <button onclick="closeModal('modal-detail')"
+            style="margin-top:20px; width:100%; padding:10px; border:none; background:#f1f5f9; border-radius:6px; cursor:pointer;">Đóng</button>
+    </div>
+</div>
+
+<!-- Modal Form (Thêm/Sửa) -->
+<div id="modal-form"
+    style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
+    <div style="background:white; width:90%; max-width:500px; border-radius:12px; padding:24px;">
+        <h3 id="form-title">Sự kiện</h3>
+        <form id="act-form">
+            <input type="hidden" id="f-id">
+            <div class="form-group"><label>Tiêu đề</label><input type="text" id="f-title" required></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div class="form-group"><label>Loại</label><input type="text" id="f-type"
+                        placeholder="Văn nghệ, Hội họp..."></div>
+                <div class="form-group">
+                    <label>Trạng thái</label>
+                    <select id="f-status">
+                        <option>Sắp diễn ra</option>
+                        <option>Đang diễn ra</option>
+                        <option>Đã kết thúc</option>
+                        <option>Đã hủy</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group"><label>Thời gian</label><input type="datetime-local" id="f-date" required></div>
+            <div class="form-group"><label>Địa điểm</label><input type="text" id="f-location"></div>
+            <div class="form-group"><label>Người quản lý</label><input type="text" id="f-manager"></div>
+            <div class="form-group"><label>Nội dung</label><textarea id="f-details" rows="3"></textarea></div>
+            <div style="display:flex; gap:10px;">
+                <button type="button" onclick="closeModal('modal-form')"
+                    style="flex:1; padding:10px; border:1px solid #ddd; background:none; border-radius:6px;">Hủy</button>
+                <button type="submit"
+                    style="flex:1; padding:10px; border:none; background:#5a73f3; color:white; border-radius:6px;">Lưu</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let currentActivities = [];
+
+        // Đóng mở Modal
+        window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+
+        // Xem chi tiết
+        window.showDetail = (id) => {
+            const a = currentActivities.find(x => x.id == id);
+            document.getElementById('det-title').innerText = a.title;
+            document.getElementById('det-info').innerHTML = `
+        <p><b>Trạng thái:</b> ${a.status}</p>
+        <p><b>Loại:</b> ${a.type}</p>
+        <p><b>Thời gian:</b> ${a.start_date}</p>
+        <p><b>Địa điểm:</b> ${a.location}</p>
+        <p><b>Quản lý:</b> ${a.organizer || 'Ban quản lý'}</p>
+        <hr>
+        <p>${a.description || 'Không có mô tả.'}</p>
+    `;
+            document.getElementById('modal-detail').style.display = 'flex';
+        };
+
+        // Mở Form Sửa
+        window.openEdit = (id) => {
+            const a = currentActivities.find(x => x.id == id);
+            document.getElementById('f-id').value = a.id;
+            document.getElementById('f-title').value = a.title;
+            document.getElementById('f-type').value = a.type;
+            document.getElementById('f-status').value = a.status;
+            document.getElementById('f-location').value = a.location;
+            document.getElementById('f-manager').value = a.organizer || "";
+            document.getElementById('f-details').value = a.description || "";
+            document.getElementById('modal-form').style.display = 'flex';
+        };
+
+        // Xóa
+        window.deleteAct = async (id) => {
+            if (confirm("Bạn có chắc muốn xóa sự kiện này?")) {
+                await fetch('http://localhost:8080/api/admin/delete-activity', { method: 'POST', body: JSON.stringify({ id: id }) });
+                fetchActivities();
+            }
+        };
+
+        // Xử lý Submit Form
+        document.getElementById('act-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const data = {
+                id: document.getElementById('f-id').value,
+                title: document.getElementById('f-title').value,
+                type: document.getElementById('f-type').value,
+                status: document.getElementById('f-status').value,
+                location: document.getElementById('f-location').value,
+                date: document.getElementById('f-date').value.replace("T", " "),
+                manager: document.getElementById('f-manager').value,
+                details: document.getElementById('f-details').value
+            };
+            await fetch('http://localhost:8080/api/admin/save-activity', { method: 'POST', body: JSON.stringify(data) });
+            closeModal('modal-form');
+            fetchActivities();
+        };
+
+        // Gán nút Thêm mới
+        document.querySelector('.btn-action').onclick = () => {
+            document.getElementById('act-form').reset();
+            document.getElementById('f-id').value = "";
+            document.getElementById('modal-form').style.display = 'flex';
+        };
+
+        // Cập nhật hàm Render
+        window.fetchActivities = async function () {
+            const response = await fetch('http://localhost:8080/api/tenant/activities');
+            currentActivities = await response.json();
+            const grid = document.getElementById('activity-grid');
+            grid.innerHTML = "";
+            document.getElementById('activity-count').innerText = `${currentActivities.length} sự kiện / hoạt động`;
+
+            currentActivities.forEach(a => {
+                const cfg = statusConfig[a.status] || statusConfig["Sắp diễn ra"];
+                const card = `
+            <div class="card activity-card">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span class="badge" style="background: ${cfg.color}; color: ${cfg.textColor}; display: flex; align-items: center; gap: 5px; font-size:11px;">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: ${cfg.dot};"></span>
+                        ${a.status}
+                    </span>
+                    <span style="font-size: 11px; background: #f1f5f9; padding: 2px 8px; border-radius: 4px;">${a.type}</span>
+                </div>
+                <h3 style="margin: 0 0 8px 0; font-size: 16px; color:#1e293b;">${a.title}</h3>
+                <p style="font-size: 13px; color: #64748b; flex: 1; line-clamp: 2; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;">${a.description || ''}</p>
+                
+                <div style="margin-top: 15px; font-size: 12px; color: #64748b; display:flex; flex-direction:column; gap:5px;">
+                    <div>🕒 ${a.start_date}</div>
+                    <div>📍 ${a.location}</div>
+                </div>
+
+                <div class="card-footer">
+                    <span style="font-size: 11px; color: #94a3b8;">${a.organizer || 'Ban quản lý'}</span>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="btn-icon" onclick="showDetail('${a.id}')" title="Xem"><img src="https://img.icons8.com/material-outlined/24/64748b/visible.png" width="16"></button>
+                        <button class="btn-icon" onclick="openEdit('${a.id}')" title="Sửa"><img src="https://img.icons8.com/material-outlined/24/64748b/edit--v1.png" width="16"></button>
+                        <button class="btn-icon" onclick="deleteAct('${a.id}')" title="Xóa"><img src="https://img.icons8.com/material-outlined/24/ef4444/trash.png" width="16"></button>
+                    </div>
+                </div>
+            </div>
+        `;
+                grid.innerHTML += card;
+            });
+        }
+    // Định nghĩa màu sắc giống statusConfig trong React[cite: 17]
+    const statusConfig = {
+        "Sắp diễn ra": { color: "rgba(90, 115, 243, 0.1)", textColor: "#5a73f3", dot: "#5a73f3" },
+        "Đang diễn ra": { color: "rgba(16, 185, 129, 0.1)", textColor: "#10b981", dot: "#10b981" },
+        "Đã kết thúc": { color: "#f1f5f9", textColor: "#475569", dot: "#475569" },
+        "Đã hủy": { color: "rgba(239, 68, 68, 0.1)", textColor: "#ef4444", dot: "#ef4444" }
+    };
+</script>

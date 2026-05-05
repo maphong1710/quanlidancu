@@ -1,0 +1,105 @@
+<!-- START OF FILE statistics.html -->
+<div style="margin-bottom: 30px;">
+    <h1 style="margin: 0; font-size: 24px; color: var(--text-main);">Thống kê dân cư</h1>
+    <p style="margin: 5px 0 0 0; color: var(--text-muted); font-size: 14px;">Phân tích chi tiết dữ liệu dân cư từ hệ
+        thống</p>
+</div>
+
+<div class="charts-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+    <!-- Phân bổ độ tuổi -->
+    <div class="card">
+        <h4>Phân bổ độ tuổi</h4>
+        <div style="height: 260px;"><canvas id="ageChart"></canvas></div>
+    </div>
+
+    <!-- Quy mô hộ gia đình (Top 10 hộ đông nhất) -->
+    <div class="card">
+        <h4>Quy mô hộ gia đình (Top 10 hộ)</h4>
+        <div style="height: 260px;"><canvas id="householdChart"></canvas></div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Bảng màu giống COLORS trong React
+    const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#14b8a6", "#f97316"];
+    let chartInstances = {};
+
+    window.initStatistics = async function () {
+        try {
+            const [resR, resH] = await Promise.all([
+                fetch('http://localhost:8080/api/admin/residents'),
+                fetch('http://localhost:8080/api/admin/households')
+            ]);
+            const residents = await resR.json();
+            const households = await resH.json();
+
+            renderAgeChart(residents);
+            renderHouseholdChart(households);
+
+        } catch (error) { console.error("Lỗi nạp dữ liệu:", error); }
+    };
+
+    // 1. Phân bổ độ tuổi theo các nhóm React: 0-17, 18-30, 31-45, 46-60, 60+
+    function renderAgeChart(residents) {
+        const groups = { "0-17": 0, "18-30": 0, "31-45": 0, "46-60": 0, "60+": 0 };
+        residents.forEach(r => {
+            const age = parseInt(r.age);
+            if (isNaN(age)) return;
+            if (age <= 17) groups["0-17"]++;
+            else if (age <= 30) groups["18-30"]++;
+            else if (age <= 45) groups["31-45"]++;
+            else if (age <= 60) groups["46-60"]++;
+            else groups["60+"]++;
+        });
+
+        createChart('ageChart', 'bar', Object.keys(groups), Object.values(groups), COLORS);
+    }
+
+    // 2. Quy mô hộ gia đình: Top 10 hộ (Giống React)
+    function renderHouseholdChart(households) {
+        // Sắp xếp các hộ theo số thành viên giảm dần và lấy 10 hộ đầu
+        const sortedHouseholds = households
+            .sort((a, b) => b.memberCount - a.memberCount)
+            .slice(0, 10);
+
+        const labels = sortedHouseholds.map(h => h.code);
+        const values = sortedHouseholds.map(h => h.memberCount);
+
+        createChart('householdChart', 'bar', labels, values, COLORS[1]);
+    }
+
+    // Hàm tạo Chart dùng chung (Đã sửa lỗi trục tọa độ)
+    function createChart(canvasId, type, labels, data, bgColor, axis = 'x') {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
+
+        chartInstances[canvasId] = new Chart(ctx, {
+            type: type,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Số lượng',
+                    data: data,
+                    backgroundColor: bgColor,
+                    borderRadius: 6,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                indexAxis: axis, // 'x' cho cột dọc, 'y' cho cột ngang
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: type === 'pie' || type === 'doughnut' ? true : false, position: 'bottom' }
+                },
+                scales: type === 'bar' ? {
+                    [axis === 'x' ? 'y' : 'x']: { beginAtZero: true, ticks: { stepSize: 1 } }
+                } : {}
+            }
+        });
+    }
+
+    initStatistics();
+</script>
