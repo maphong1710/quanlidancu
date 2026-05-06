@@ -653,16 +653,68 @@ static class GetBookingsHandler implements HttpHandler {
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         setupCORS(exchange);
-        
+
+        if ("OPTIONS".equals(exchange.getRequestMethod())) {
+            exchange.sendResponseHeaders(204, -1);
+            return;
+        }
+
+        String username = null;
+
+        try {
+            // =========================
+            // 1. ƯU TIÊN POST BODY JSON
+            // =========================
+            if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
+                String body = new String(
+                        exchange.getRequestBody().readAllBytes(),
+                        StandardCharsets.UTF_8
+                );
+
+
+                if (body != null && !body.isEmpty()) {
+                    username = extractValue(body, "username");
+
+                    // fallback nếu bạn lỡ dùng "id"
+                    if (username == null || username.isEmpty()) {
+                        username = extractValue(body, "id");
+                    }
+                }
+            }
+
+            // =========================
+            // 2. FALLBACK GET QUERY
+            // =========================
+            if (username == null || username.isEmpty()) {
+                String query = exchange.getRequestURI().getQuery();
+                if (query != null && query.contains("username=")) {
+                    username = query.split("username=")[1].split("&")[0];
+                }
+            }
+
+            // =========================
+            // 3. CHECK NULL
+            // =========================
+            if (username == null || username.isEmpty()) {
+                sendResponse(exchange, "{\"error\":\"Missing username\"}");
+                return;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            sendResponse(exchange, "{\"error\":\"Invalid request\"}");
+            return;
+        }
 
         StringBuilder json = new StringBuilder("[");
 
         try (Connection conn = DriverManager.getConnection(
                 "jdbc:mysql://localhost:3306/quanlidancu", "root", "123456")) {
 
-            String sql = "SELECT * FROM bookings ORDER BY bookingID DESC";
+            String sql = "SELECT * FROM bookings WHERE username = ? ORDER BY bookingID DESC";
             PreparedStatement stmt = conn.prepareStatement(sql);
-            
+            stmt.setString(1, username);
+
             ResultSet rs = stmt.executeQuery();
 
             boolean first = true;
@@ -672,20 +724,21 @@ static class GetBookingsHandler implements HttpHandler {
                 first = false;
 
                 json.append("{")
-                    .append("\"order_id\":").append(rs.getInt("bookingID")).append(",")
-                    .append("\"flatID\":\"").append(rs.getString("flatID")).append("\",")
-                    .append("\"customerName\":\"").append(rs.getString("customerName")).append("\",")
-                    .append("\"phone\":\"").append(rs.getString("phone")).append("\",")
-                    .append("\"bookingDate\":\"").append(rs.getTimestamp("date")).append("\",")
-                    .append("\"status\":\"").append(rs.getString("status")).append("\"")
-                .append("}");
+                        .append("\"order_id\":").append(rs.getInt("bookingID")).append(",")
+                        .append("\"flatID\":\"").append(rs.getString("flatID")).append("\",")
+                        .append("\"customerName\":\"").append(rs.getString("customerName")).append("\",")
+                        .append("\"phone\":\"").append(rs.getString("phone")).append("\",")
+                        .append("\"bookingDate\":\"").append(rs.getTimestamp("date")).append("\",")
+                        .append("\"status\":\"").append(rs.getString("status")).append("\"")
+                        .append("}");
             }
 
         } catch (Exception e) {
-    e.printStackTrace(); // QUAN TRỌNG NHẤT
-    sendResponse(exchange,
-        "{\"error\":\"DB error\", \"detail\":\"" + e.getMessage() + "\"}");
-}
+            e.printStackTrace();
+            sendResponse(exchange,
+                    "{\"error\":\"DB error\", \"detail\":\"" + e.getMessage() + "\"}");
+            return;
+        }
 
         json.append("]");
 

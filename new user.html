@@ -491,13 +491,21 @@ function renderBookings(data) {
     });
 }
 function fetchBookingsFromDB() {
-    fetch('http://localhost:8080/api/bookings')
-        .then(res => res.json())
-        .then(data => {
-            bookingsData = data;
-            renderBookings(data);
-        })
-        .catch(err => console.error("Lỗi load bookings:", err));
+    const username = sessionStorage.getItem("username");
+
+    fetch('http://localhost:8080/api/bookings', {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ id: sessionStorage.getItem("username") })
+})
+    .then(res => res.json())
+    .then(data => {
+        bookingsData = data;
+        renderBookings(data);
+    })
+    .catch(err => console.error("Lỗi load bookings:", err));
 }
 
 </script>
